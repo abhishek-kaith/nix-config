@@ -152,28 +152,24 @@ nix-collect-garbage -d
 
 ---
 
-## VM Install (fresh)
+## Installing a host (from the NixOS live ISO)
 
-```bash
-# on live CD — enable flakes
-mkdir -p ~/.config/nix && echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
-
-# start SSH, copy repo from Arch host
-passwd root && systemctl start sshd
-# on Arch: scp -r /home/k/Projects/personal/nix-config root@<vm-ip>:/tmp/nix-config
-
-# partition + format + mount
-sudo nix run github:nix-community/disko -- --mode destroy,format,mount /tmp/nix-config/hosts/vm/disko.nix
-
-# generate hardware config, copy it back into repo on Arch, then copy repo back to live CD
-nixos-generate-config --root /mnt --no-filesystems
-# on Arch: scp root@<vm-ip>:/mnt/etc/nixos/hardware-configuration.nix hosts/vm/
-
-# install
-nixos-install --flake /tmp/nix-config#vm --root /mnt
-
-# set user password
-nixos-enter --root /mnt -c "passwd k"
-
-reboot
-```
+1. Boot the NixOS live ISO and get networking (`nmtui` or `iwctl`).
+2. Clone this repo and enter it:
+   ```sh
+   nix-shell -p git --run 'git clone <repo-url> /tmp/nix-config'
+   cd /tmp/nix-config
+   ```
+3. New machine only: confirm the target disk with `lsblk -d` and, if it isn't
+   `/dev/nvme0n1`, edit `device` in `hosts/<host>/disko.nix`. Regenerate
+   `hosts/<host>/hardware-configuration.nix` with
+   `nixos-generate-config --no-filesystems --show-hardware-config` if needed.
+4. From the repo root, run the installer (ERASES the target disk):
+   ```sh
+   nix run .#install -- t480
+   ```
+   It partitions+mounts via disko, sets `TMPDIR=/mnt/tmp` (the live ISO's `/tmp`
+   is RAM-backed and overflows on a desktop closure), and runs `nixos-install`
+   with the noctalia cache enabled.
+5. Reboot, then set your password: `passwd k`.
+6. Verify hibernation: `systemctl hibernate`, then power on and confirm resume.
