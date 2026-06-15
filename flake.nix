@@ -17,6 +17,7 @@
 
     # hardware-specific tuning profiles (e.g. ThinkPad T480)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
+    nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   # inputs@ binds ALL inputs as a single attribute set called `inputs`
