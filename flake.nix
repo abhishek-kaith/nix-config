@@ -14,6 +14,9 @@
     noctalia.url = "github:noctalia-dev/noctalia";
     # intentionally NOT following nixpkgs — noctalia cachix is built with its own nixpkgs;
     # overriding causes a hash mismatch and forces a full source compile
+
+    # hardware-specific tuning profiles (e.g. ThinkPad T480)
+    nixos-hardware.url = "github:NixOS/nixos-hardware";
   };
 
   # inputs@ binds ALL inputs as a single attribute set called `inputs`
