@@ -164,7 +164,8 @@ nix-collect-garbage -d
    `/dev/nvme0n1`, edit `device` in `hosts/<host>/disko.nix`. Regenerate
    `hosts/<host>/hardware-configuration.nix` with
    `nixos-generate-config --no-filesystems --show-hardware-config` if needed.
-4. From the repo root, run the installer (ERASES the target disk). The
+4. From the repo root, run the installer for your target host — `t480` below,
+   or `vm` for the QEMU VM. This **ERASES the target disk**. The
    `--extra-experimental-features` flag covers stock ISOs that don't enable
    flakes by default:
    ```sh
@@ -172,6 +173,8 @@ nix-collect-garbage -d
    ```
    It partitions+mounts via disko, sets `TMPDIR=/mnt/tmp` (the live ISO's `/tmp`
    is RAM-backed and overflows on a desktop closure), and runs `nixos-install`
-   with the noctalia cache enabled.
+   with the noctalia cache enabled. During partitioning, disko prompts you to
+   set the LUKS disk-encryption passphrase — choose a strong one; you'll enter
+   it on every boot.
 5. Reboot, then set your password: `passwd k`.
 6. Verify hibernation: `systemctl hibernate`, then power on and confirm resume.
