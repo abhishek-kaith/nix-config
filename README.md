@@ -164,9 +164,11 @@ nix-collect-garbage -d
    `/dev/nvme0n1`, edit `device` in `hosts/<host>/disko.nix`. Regenerate
    `hosts/<host>/hardware-configuration.nix` with
    `nixos-generate-config --no-filesystems --show-hardware-config` if needed.
-4. From the repo root, run the installer (ERASES the target disk):
+4. From the repo root, run the installer (ERASES the target disk). The
+   `--extra-experimental-features` flag covers stock ISOs that don't enable
+   flakes by default:
    ```sh
-   nix run .#install -- t480
+   nix --extra-experimental-features 'nix-command flakes' run .#install -- t480
    ```
    It partitions+mounts via disko, sets `TMPDIR=/mnt/tmp` (the live ISO's `/tmp`
    is RAM-backed and overflows on a desktop closure), and runs `nixos-install`
