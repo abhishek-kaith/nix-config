@@ -44,7 +44,11 @@ discovered, so installs are reproducible across both the `vm` and `t480` hosts.
    `common/pc/ssd` (TRIM), the thinkpad base (TrackPoint), and enables
    `services.throttled` (fixes the T480 BD-PROCHOT throttling). It does **not**
    touch disk/LUKS/bootloader/power-daemon — those stay ours, no conflicts.
-   Added as a flake input, **not** following nixpkgs.
+   Added as a flake input **following** nixpkgs — its `nixpkgs` input feeds only
+   nixos-hardware's own checks, so following it drops a redundant nixpkgs
+   snapshot from the lock and matches the `disko`/`home-manager` convention.
+   (Unlike `noctalia`, which must stay unfollowed for cache-hash reasons.)
+   *(Revised during implementation — the original draft said "not following".)*
 4. **New shared `modules/nixos/laptop.nix`** for noctalia's real-hardware
    prerequisites (upower, bluetooth, power-profiles-daemon). Imported by laptop
    hosts only; keeps `vm` clean.

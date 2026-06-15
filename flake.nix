@@ -52,7 +52,9 @@
 
           echo ">>> Installing NixOS (TMPDIR on disk to avoid live-ISO RAM exhaustion)"
           mkdir -p /mnt/tmp
-          TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt \
+          # --no-root-passwd: skip the interactive root-password prompt; the
+          # autologin 'k' user sets its own password on first boot (see README)
+          TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt --no-root-passwd \
             --option extra-substituters https://noctalia.cachix.org \
             --option extra-trusted-public-keys noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
 
