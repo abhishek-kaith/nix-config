@@ -28,7 +28,8 @@
     in
     {
       nixosConfigurations = {
-        vm = lib.mkHost { hostname = "vm"; };
+        vm   = lib.mkHost { hostname = "vm"; };
+        t480 = lib.mkHost { hostname = "t480"; };
       };
     };
 }
