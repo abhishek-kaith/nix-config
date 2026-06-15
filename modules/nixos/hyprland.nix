@@ -10,7 +10,6 @@
   services.getty.autologinUser = "k";
 
   environment.sessionVariables = {
-    NIXOS_OZONE_WL          = "1";  # electron apps use Wayland
-    WLR_NO_HARDWARE_CURSORS = "1";  # required in QEMU VM
+    NIXOS_OZONE_WL = "1";  # electron apps use Wayland
   };
 }

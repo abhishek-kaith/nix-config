@@ -22,6 +22,9 @@
     efi.canTouchEfiVariables = true;
   };
 
+  # software cursors — required under QEMU; real hardware uses HW cursors
+  environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
+
   users.users.k = {
     isNormalUser = true;
     extraGroups  = [ "wheel" "networkmanager" ];
