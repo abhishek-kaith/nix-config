@@ -33,11 +33,17 @@
       # /tmp is RAM-backed and overflows on a desktop closure).
       installer = pkgs.writeShellApplication {
         name = "install";
-        runtimeInputs = [ pkgs.disko pkgs.nixos-install-tools pkgs.coreutils ];
+        # use the disko from our flake input (not nixpkgs) so the partitioner
+        # and the host's disko NixOS module are the exact same revision
+        runtimeInputs = [ inputs.disko.packages.${system}.disko pkgs.nixos-install-tools pkgs.coreutils ];
         text = ''
           host="''${1:-}"
           if [ -z "$host" ]; then
             echo "usage: nix run .#install -- <hostname>" >&2
+            exit 1
+          fi
+          if [ ! -f flake.nix ]; then
+            echo "error: run this from the repo root (no flake.nix in $PWD)" >&2
             exit 1
           fi
 
