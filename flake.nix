@@ -24,12 +24,45 @@
   # so we can pass the whole set to lib and down to every host module
   outputs = inputs@{ self, nixpkgs, nixpkgs-unstable, ... }:
     let
-      lib = import ./lib { inherit nixpkgs nixpkgs-unstable inputs; };
+      system = "x86_64-linux";
+      lib    = import ./lib { inherit nixpkgs nixpkgs-unstable inputs; };
+      pkgs   = import nixpkgs { inherit system; };
+
+      # One-command installer: partition+mount via disko, then nixos-install.
+      # TMPDIR=/mnt/tmp keeps build scratch on the target disk (the live ISO's
+      # /tmp is RAM-backed and overflows on a desktop closure).
+      installer = pkgs.writeShellApplication {
+        name = "install";
+        runtimeInputs = [ pkgs.disko pkgs.nixos-install-tools pkgs.coreutils ];
+        text = ''
+          host="''${1:-}"
+          if [ -z "$host" ]; then
+            echo "usage: nix run .#install -- <hostname>" >&2
+            exit 1
+          fi
+
+          echo ">>> Partitioning + mounting disk for '$host' (this ERASES the target disk)"
+          disko --mode destroy,format,mount --flake ".#$host"
+
+          echo ">>> Installing NixOS (TMPDIR on disk to avoid live-ISO RAM exhaustion)"
+          mkdir -p /mnt/tmp
+          TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt \
+            --option extra-substituters https://noctalia.cachix.org \
+            --option extra-trusted-public-keys noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+
+          echo ">>> Done. Set a password on first boot: passwd k"
+        '';
+      };
     in
     {
       nixosConfigurations = {
         vm   = lib.mkHost { hostname = "vm"; };
         t480 = lib.mkHost { hostname = "t480"; };
+      };
+
+      apps.${system}.install = {
+        type    = "app";
+        program = "${installer}/bin/install";
       };
     };
 }
