@@ -69,6 +69,7 @@
       apps.${system}.install = {
         type    = "app";
         program = "${installer}/bin/install";
+        meta.description = "Partition + install a host from the NixOS live ISO (disko + nixos-install)";
       };
     };
 }
