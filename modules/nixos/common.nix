@@ -19,6 +19,9 @@
     channel.enable = false; # flakes handle pinning; channels are redundant
   };
 
+  # compressed RAM swap — eases memory pressure; coexists with disk hibernation swap
+  zramSwap.enable = true;
+
   nixpkgs.config.allowUnfree = true;
 
   environment.systemPackages = with pkgs; [
