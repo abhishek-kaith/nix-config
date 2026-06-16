@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, user, ... }:
 {
   time.timeZone      = "Asia/Kolkata";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -7,7 +7,7 @@
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
       auto-optimise-store   = true;
-      trusted-users         = [ "root" "k" ];
+      trusted-users         = [ "root" user ];
       substituters          = [ "https://noctalia.cachix.org" ];
       trusted-public-keys   = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
     };

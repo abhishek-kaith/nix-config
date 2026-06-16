@@ -1,4 +1,4 @@
-{ ... }:
+{ user, ... }:
 {
   imports = [
     ../../modules/home/git.nix
@@ -10,8 +10,8 @@
     ../../modules/home/alacritty.nix  # terminal
   ];
 
-  home.username      = "k";
-  home.homeDirectory = "/home/k";
+  home.username      = user;
+  home.homeDirectory = "/home/${user}";
 
   # must match the NixOS release — same as system.stateVersion in hosts/vm/default.nix
   home.stateVersion  = "26.05";

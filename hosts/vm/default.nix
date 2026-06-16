@@ -1,5 +1,5 @@
 # inputs comes from specialArgs set in lib/default.nix
-{ pkgs, inputs, ... }:
+{ pkgs, inputs, user, ... }:
 {
   imports = [
     inputs.disko.nixosModules.disko  # registers disko's NixOS options
@@ -25,11 +25,11 @@
   # software cursors — required under QEMU; real hardware uses HW cursors
   environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
 
-  users.users.k = {
+  users.users.${user} = {
     isNormalUser = true;
     extraGroups  = [ "wheel" "networkmanager" ];
     shell        = pkgs.zsh;
-    # set password on first boot: passwd k
+    initialPassword = "password"; # bootstrap login/sudo; change with `passwd` after first boot
   };
 
   security.sudo.wheelNeedsPassword = true;

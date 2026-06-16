@@ -6,7 +6,7 @@
       inherit system;
       specialArgs = {
         # every host module can declare `inputs` as an arg to access flake inputs
-        inherit inputs;
+        inherit inputs user;
         # every host module can declare `pkgs-unstable` to pull a newer package
         pkgs-unstable = import nixpkgs-unstable {
           inherit system;
@@ -21,7 +21,7 @@
           home-manager.useUserPackages = true;  # packages go to /etc/profiles/per-user/${user}
           home-manager.users.${user}   = import ../hosts/${hostname}/home.nix;
           home-manager.extraSpecialArgs = {
-            inherit inputs;
+            inherit inputs user;
             pkgs-unstable = import nixpkgs-unstable {
               inherit system;
               config.allowUnfree = true;
