@@ -44,13 +44,12 @@ nix flake update nixpkgs    # update one input
 
 ## Binary Caches (Cachix)
 
-Binary caches let Nix download pre-built packages instead of compiling from source. Hyprland is the main one you need — it's C++ and slow to compile.
+Binary caches let Nix download pre-built packages instead of compiling from source.
 
 ### Set up a cache (one-time, on Arch)
 
 ```bash
 nix profile add nixpkgs#cachix   # install cachix CLI
-cachix use hyprland              # adds cache to ~/.config/nix/nix.conf
 ```
 
 After this, `nix build` picks up the cache automatically — no extra flags needed.
@@ -65,56 +64,43 @@ After this, `nix build` picks up the cache automatically — no extra flags need
 
 | Package   | Cache command          | Why                              |
 |-----------|------------------------|----------------------------------|
-| Hyprland  | `cachix use hyprland`  | C++ compositor, slow to compile  |
 | Noctalia  | `cachix use noctalia`  | C++ shell, slow to compile       |
 
 ### Adding a cache permanently to NixOS config
 
-Once you've confirmed a cache works, add it to `modules/nixos/common.nix` so every rebuild uses it:
-
-```nix
-nix.settings = {
-  substituters      = [ "https://hyprland.cachix.org" ];
-  trusted-public-keys = [ "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc=" ];
-};
-```
-
-The key values come from the cachix cache page at `cachix.org/<name>`.
+Once you've confirmed a cache works, add it to `modules/nixos/common.nix` so every rebuild uses it. The key values come from the cachix cache page at `cachix.org/<name>`.
 
 ---
 
 ## Gotchas & Notes
 
-### Hyprland: don't set `nixpkgs.follows`
+### niri: two modules, both needed
 
-```nix
-# flake.nix — correct
-hyprland.url = "github:hyprwm/Hyprland";
-# NO: hyprland.inputs.nixpkgs.follows = "nixpkgs";
-```
+| Layer | File | Responsibility |
+|---|---|---|
+| NixOS | `modules/nixos/niri.nix` | enables `programs.niri`, sets `pkgs-unstable.niri`, autologin, swaybg |
+| home-manager | `modules/home/niri.nix` | symlinks the editable `config/niri/config.kdl`, execs `niri-session` on TTY1 |
 
-The cachix cache is built with Hyprland's own pinned nixpkgs. Overriding it changes all dependency hashes → cache miss → compiles from source. Leave it unfollowed.
+niri is from `pkgs-unstable.niri` (needs ≥ 26.04 for blur) and comes from
+`cache.nixos.org` — **no special binary cache required**.
 
-### Hyprland: two modules, both needed
+### Editable configs: the repo must live at `~/nix-config`
 
-| Module | File | What it does |
-|--------|------|-------------|
-| NixOS | `modules/nixos/hyprland.nix` | enables compositor, sets packages, autologin |
-| home-manager | `modules/home/hyprland.nix` | places Lua config, sets up Hyprland for user |
+The external configs are referenced from the **working tree**, not the nix store,
+so they can be edited without a rebuild:
 
-Both must set `package` to the same flake package or they'll use different Hyprland versions.
+| Config | How it's wired | Reload |
+|---|---|---|
+| niri | `mkOutOfStoreSymlink` → `~/.config/niri/config.kdl` | instant (niri watches) |
+| alacritty | `settings.general.import` of the repo TOML | instant (`live_config_reload`) |
+| tmux | `source-file` the repo conf | `prefix + R` |
+| git | `[include]` of the repo config | next `git` command |
+| zsh | managed `.zshrc` sources `config/zsh/rc.zsh` | new shell |
+| scripts | `mkOutOfStoreSymlink` → `~/.scripts/` | live |
 
-### Hyprland: raw Lua config needs `systemd.enable = false`
-
-The home-manager `wayland.windowManager.hyprland` module expects config via `hyprland.settings`. Since we use a raw `hyprland.lua` file instead, disable its systemd integration to suppress the warning:
-
-```nix
-wayland.windowManager.hyprland = {
-  enable         = true;
-  package        = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
-  systemd.enable = false;
-};
-```
+**Requirement:** clone this repo to `~/nix-config` on each host. If it's elsewhere,
+update `repoDir` in `lib/default.nix`. If the repo is absent, these configs fall
+back to app defaults (the zsh source is guarded).
 
 ### Build on Arch, copy to VM
 
