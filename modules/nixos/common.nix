@@ -65,6 +65,5 @@
     git
     htop  # lightweight fallback to btop
 
-    grimblast  # screenshot: area and fullscreen to clipboard
   ];
 }

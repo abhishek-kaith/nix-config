@@ -8,7 +8,7 @@
     ./hardware-configuration.nix
     ../../modules/nixos/common.nix    # timezone, nix settings, zram, base packages
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
-    ../../modules/nixos/hyprland.nix  # compositor, portals, autologin
+    ../../modules/nixos/niri.nix     # compositor, portals, autologin
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, noctalia overlay
     ../../modules/nixos/laptop.nix    # upower, bluetooth, power-profiles (noctalia prereqs)
   ];

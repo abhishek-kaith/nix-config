@@ -5,7 +5,7 @@
     ../../modules/home/zsh.nix
     ../../modules/home/tmux.nix
     ../../modules/home/scripts.nix
-    ../../modules/home/hyprland.nix   # lua config, TTY1 exec
+    ../../modules/home/niri.nix       # kdl config (out-of-store), TTY1 exec
     ../../modules/home/noctalia.nix   # noctalia shell
     ../../modules/home/alacritty.nix  # terminal
   ];

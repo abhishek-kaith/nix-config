@@ -7,7 +7,7 @@
     ./hardware-configuration.nix     # kernel modules, CPU microcode (generated)
     ../../modules/nixos/common.nix  # timezone, nix settings, base packages
     ../../modules/nixos/shell.nix   # zsh, starship, fzf, zoxide
-    ../../modules/nixos/hyprland.nix  # compositor, portals, autologin
+    ../../modules/nixos/niri.nix      # compositor, portals, autologin
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, overlay
   ];
 
