@@ -22,6 +22,7 @@
           home-manager.users.${user}   = import ../hosts/${hostname}/home.nix;
           home-manager.extraSpecialArgs = {
             inherit inputs user;
+            repoDir = "/home/${user}/nix-config";
             pkgs-unstable = import nixpkgs-unstable {
               inherit system;
               config.allowUnfree = true;
