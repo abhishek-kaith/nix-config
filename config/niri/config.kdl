@@ -53,7 +53,7 @@ binds {
     Mod+Space     { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
     Mod+S         { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
     Mod+Comma     { spawn "noctalia" "msg" "settings-toggle"; }
-    Mod+BackSpace { spawn "noctalia" "msg" "lock"; }
+    Mod+BackSpace { spawn "noctalia" "msg" "session" "lock"; }
 
     // focus — vim keys + arrows (H/L = columns, J/K = windows in a column)
     Mod+H { focus-column-left; }
@@ -115,10 +115,10 @@ binds {
     XF86AudioMute         allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
     XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
     XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
-    XF86AudioPlay  { spawn "noctalia" "msg" "media-play"; }
-    XF86AudioPause { spawn "noctalia" "msg" "media-pause"; }
-    XF86AudioNext  { spawn "noctalia" "msg" "media-next"; }
-    XF86AudioPrev  { spawn "noctalia" "msg" "media-prev"; }
+    XF86AudioPlay  { spawn "noctalia" "msg" "media" "toggle"; }
+    XF86AudioPause { spawn "noctalia" "msg" "media" "toggle"; }
+    XF86AudioNext  { spawn "noctalia" "msg" "media" "next"; }
+    XF86AudioPrev  { spawn "noctalia" "msg" "media" "previous"; }
 }
 
 // rounded corners for all windows; clip-to-geometry is also needed for the blur
