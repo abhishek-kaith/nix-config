@@ -367,7 +367,7 @@ action = "ToggleViMode"
 [[keyboard.bindings]]
 key = "Return"
 mods = "Shift"
-chars = ""
+chars = "\u001b"
 ```
 
 - [ ] **Step 2: Point home-manager's alacritty at the editable file**
