@@ -1,13 +1,8 @@
-{ ... }:
+{ repoDir, ... }:
 {
   programs.git = {
-    enable   = true;
-    settings = {
-      user.name  = "Abhishek Kaith";
-      user.email = "abhishekkaith76@gmail.com";
-      init.defaultBranch   = "main";
-      push.autoSetupRemote = true;
-      pull.rebase          = false;
-    };
+    enable = true;
+    # real settings live in the editable repo file; HM only adds an [include]
+    includes = [ { path = "${repoDir}/config/git/config"; } ];
   };
 }
