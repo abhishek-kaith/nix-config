@@ -78,11 +78,14 @@ Once you've confirmed a cache works, add it to `modules/nixos/common.nix` so eve
 
 | Layer | File | Responsibility |
 |---|---|---|
-| NixOS | `modules/nixos/niri.nix` | enables `programs.niri`, sets `pkgs-unstable.niri`, autologin, swaybg |
+| NixOS | `modules/nixos/niri.nix` | enables `programs.niri`, sets `pkgs-unstable.niri`, autologin |
 | home-manager | `modules/home/niri.nix` | symlinks the editable `config/niri/config.kdl`, execs `niri-session` on TTY1 |
 
 niri is from `pkgs-unstable.niri` (needs ≥ 26.04 for blur) and comes from
-`cache.nixos.org` — **no special binary cache required**.
+`cache.nixos.org` — **no special binary cache required**. noctalia (the shell)
+is started from `config/niri/config.kdl` and manages the wallpaper itself; its
+keybinds use `noctalia msg <command>` per the
+[noctalia v5 niri docs](https://docs.noctalia.dev/v5/compositor-settings/niri).
 
 ### Editable configs: the repo must live at `~/nix-config`
 

@@ -1,6 +1,10 @@
 // niri config — lives in the nix-config repo, symlinked to ~/.config/niri/config.kdl.
 // niri watches this file and hot-reloads on save (no rebuild needed).
-// Translated from the previous Hyprland Lua config; see git history.
+// Keybinds translated from the previous Hyprland Lua config; noctalia shell
+// integration per the noctalia v5 niri docs:
+//   https://docs.noctalia.dev/v5/compositor-settings/niri
+// noctalia is driven over IPC with `noctalia msg <command>` (verified against
+// the noctalia 5.0.0 binary).
 
 input {
     keyboard {
@@ -27,16 +31,29 @@ layout {
 
 prefer-no-csd
 
+// noctalia (the shell) starts here and manages the wallpaper itself —
+// point it at config/wallpapers/ from noctalia's settings. No swaybg.
 spawn-at-startup "noctalia"
-spawn-at-startup "swaybg" "-i" "/home/k/nix-config/config/wallpapers/dark/starfield.jpg" "-m" "fill"
+
+// niri's launcher activation works better for noctalia with this set (noctalia v5 docs).
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
 
 binds {
+    // apps / session
     Mod+Return { spawn "alacritty"; }
     Mod+Q { close-window; }
     Mod+Shift+E { quit; }
 
     Mod+F { fullscreen-window; }
     Mod+V { toggle-window-floating; }
+
+    // noctalia shell (v5 IPC: `noctalia msg <command>`)
+    Mod+Space     { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+S         { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+Comma     { spawn "noctalia" "msg" "settings-toggle"; }
+    Mod+BackSpace { spawn "noctalia" "msg" "lock"; }
 
     // focus — vim keys + arrows (H/L = columns, J/K = windows in a column)
     Mod+H { focus-column-left; }
@@ -84,21 +101,46 @@ binds {
     Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
     Mod+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
 
-    // screenshots (niri built-in; replaces grimblast)
+    // screenshots (niri built-in; replaces grimblast). Print = interactive UI
+    // (pick region/window/output); Mod+Shift+S also opens it for muscle memory.
+    Print       { screenshot; }
+    Ctrl+Print  { screenshot-screen; }
+    Mod+Print   { screenshot-window; }
     Mod+Shift+S { screenshot; }
-    Mod+S { screenshot-screen; }
 
-    // lock (noctalia)
-    Mod+BackSpace { spawn "noctalia" "lock"; }
+    // media / hardware keys → noctalia (shows its OSD). allow-when-locked so
+    // volume/brightness still work on the lock screen.
+    XF86AudioRaiseVolume  allow-when-locked=true { spawn "noctalia" "msg" "volume-up"; }
+    XF86AudioLowerVolume  allow-when-locked=true { spawn "noctalia" "msg" "volume-down"; }
+    XF86AudioMute         allow-when-locked=true { spawn "noctalia" "msg" "volume-mute"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "noctalia" "msg" "brightness-up"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "noctalia" "msg" "brightness-down"; }
+    XF86AudioPlay  { spawn "noctalia" "msg" "media-play"; }
+    XF86AudioPause { spawn "noctalia" "msg" "media-pause"; }
+    XF86AudioNext  { spawn "noctalia" "msg" "media-next"; }
+    XF86AudioPrev  { spawn "noctalia" "msg" "media-prev"; }
+}
+
+// rounded corners for all windows; clip-to-geometry is also needed for the blur
+// below to follow the rounded shape.
+window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
 }
 
 // alacritty is translucent but does not request blur via the protocol —
 // give it a blurred backdrop. (niri 26.04+)
 window-rule {
     match app-id="Alacritty"
-    geometry-corner-radius 8
-    clip-to-geometry true
     background-effect {
         blur true
     }
+}
+
+// float the noctalia settings window at a sensible size (noctalia v5 niri docs).
+window-rule {
+    match app-id="dev.noctalia.Noctalia.Settings"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
 }

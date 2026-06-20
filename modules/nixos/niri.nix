@@ -1,4 +1,4 @@
-{ pkgs, pkgs-unstable, user, ... }:
+{ pkgs-unstable, user, ... }:
 {
   programs.niri = {
     enable  = true;
@@ -9,7 +9,5 @@
   services.getty.autologinUser = user;
 
   environment.sessionVariables.NIXOS_OZONE_WL = "1";  # electron apps use Wayland
-
-  # niri has no built-in wallpaper renderer; swaybg sets one (spawn-at-startup in config.kdl)
-  environment.systemPackages = [ pkgs.swaybg ];
+  # wallpaper is managed by noctalia (the shell), not swaybg
 }
