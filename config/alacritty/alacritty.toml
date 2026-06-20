@@ -1,0 +1,32 @@
+[general]
+
+[window]
+opacity = 0.85
+
+[window.padding]
+x = 5
+y = 5
+
+[scrolling]
+history               = 100000
+multiplier            = 3
+
+[font]
+normal                = { family = "JetBrainsMono Nerd Font Mono", style = "Medium" }
+bold                  = { family = "JetBrainsMono Nerd Font Mono", style = "Bold" }
+italic                = { family = "JetBrainsMono Nerd Font Mono", style = "Italic" }
+bold_italic           = { family = "JetBrainsMono Nerd Font Mono", style = "Bold Italic" }
+size                  = 14
+
+[selection]
+save_to_clipboard = true
+
+[[keyboard.bindings]]
+key = "Space"
+mods = "Control|Shift"
+action = "ToggleViMode"
+
+[[keyboard.bindings]]
+key = "Return"
+mods = "Shift"
+chars = ""
