@@ -1,7 +1,6 @@
-{ ... }:
+{ config, repoDir, ... }:
 {
-  home.file.".scripts/tmux-sessionizer" = {
-    source     = ../../config/scripts/tmux-sessionizer;
-    executable = true;  # home-manager sets chmod +x on activation
-  };
+  # editable: symlink to the working tree so script edits take effect immediately
+  home.file.".scripts/tmux-sessionizer".source =
+    config.lib.file.mkOutOfStoreSymlink "${repoDir}/config/scripts/tmux-sessionizer";
 }
