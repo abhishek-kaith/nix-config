@@ -7,6 +7,6 @@
 
   # login shell: exec niri only on TTY1
   programs.zsh.profileExtra = ''
-    [ "$(tty)" = "/dev/tty1" ] && exec niri-session
+    [ "$(tty)" = "/dev/tty1" ] && exec niri --session
   '';
 }
