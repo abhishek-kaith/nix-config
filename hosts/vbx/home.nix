@@ -13,6 +13,6 @@
   home.username      = user;
   home.homeDirectory = "/home/${user}";
 
-  # must match the NixOS release — same as system.stateVersion in hosts/vm/default.nix
+  # must match the NixOS release — same as system.stateVersion in hosts/vbx/default.nix
   home.stateVersion  = "26.05";
 }

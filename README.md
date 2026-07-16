@@ -1,6 +1,12 @@
 # nix-config
 
-Flake-based NixOS configuration. Hosts: `vm` (QEMU). User: `k`.
+Flake-based NixOS configuration.
+
+| Host   | Platform      | User   |
+|--------|---------------|--------|
+| `vkvm` | QEMU/KVM VM   | `kvm`  |
+| `vbx`  | VirtualBox VM | `vbox` |
+| `t480` | ThinkPad T480 | `k`    |
 
 ## Structure
 
@@ -10,7 +16,9 @@ lib/default.nix            # mkHost helper
 config/                    # native format files (tmux, scripts)
 modules/nixos/             # system modules (common, shell)
 modules/home/              # home-manager modules (git, zsh, tmux, scripts)
-hosts/vm/                  # VM host (disko, hardware, home)
+hosts/vkvm/                # QEMU/KVM host (disko, hardware, home)
+hosts/vbx/                 # VirtualBox host
+hosts/t480/                # ThinkPad T480 host
 ```
 
 ---
@@ -27,10 +35,10 @@ nix flake show
 nix flake check
 
 # full build — downloads everything, creates ./result symlink
-nix build .#nixosConfigurations.vm.config.system.build.toplevel
+nix build .#nixosConfigurations.vkvm.config.system.build.toplevel
 
 # evaluate a specific value (useful for debugging options)
-nix eval .#nixosConfigurations.vm.config.networking.hostName
+nix eval .#nixosConfigurations.vkvm.config.networking.hostName
 ```
 
 ### Update inputs
@@ -101,23 +109,27 @@ so they can be edited without a rebuild:
 | zsh | managed `.zshrc` sources `config/zsh/rc.zsh` | new shell |
 | scripts | `mkOutOfStoreSymlink` → `~/.scripts/` | live |
 
-**Requirement:** clone this repo to `~/nix-config` on each host. If it's elsewhere,
-update `repoDir` in `lib/default.nix`. If the repo is absent, these configs fall
+**How it gets there:** the installer (`nix run .#install`) seeds this repo into
+`~/nix-config` on the new system automatically, so a fresh install boots with
+these already wired up. For an already-running host, clone it to `~/nix-config`
+yourself. `repoDir` in `lib/default.nix` is `/home/<user>/nix-config` (the user
+differs per host — `kvm`, `vbox`, `k`); if the repo is absent, these configs fall
 back to app defaults (the zsh source is guarded).
 
-### Build on Arch, copy to VM
+### Build on Arch, copy to a VM
 
-Noctalia (C++, no binary cache) needs more RAM than the VM has. Build on Arch, copy the result:
+Noctalia (C++, no binary cache) needs more RAM than the VM has. Build on Arch, copy
+the result (example uses the `vkvm` host / `kvm` user — swap for `vbx`/`vbox`):
 
 ```bash
 # on Arch
-nix build .#nixosConfigurations.vm.config.system.build.toplevel
-nix copy --to ssh://k@<vm-ip> .#nixosConfigurations.vm.config.system.build.toplevel
+nix build .#nixosConfigurations.vkvm.config.system.build.toplevel
+nix copy --to ssh://kvm@<vm-ip> .#nixosConfigurations.vkvm.config.system.build.toplevel
 
 # sync config + apply
 rsync -av --exclude='.git' --filter=':- .gitignore' \
-  /home/k/Projects/personal/nix-config/ k@<vm-ip>:~/nix-config/
-ssh k@<vm-ip> 'sudo nixos-rebuild switch --flake ~/nix-config#vm'
+  /home/k/Projects/personal/nix-config/ kvm@<vm-ip>:~/nix-config/
+ssh kvm@<vm-ip> 'sudo nixos-rebuild switch --flake ~/nix-config#vkvm'
 ```
 
 ---
@@ -125,15 +137,15 @@ ssh k@<vm-ip> 'sudo nixos-rebuild switch --flake ~/nix-config#vm'
 ## Day-to-day
 
 ```bash
-# apply config (inside VM)
-sudo nixos-rebuild switch --flake ~/nix-config#vm
+# apply config (on the host itself; use its own flake attr — vkvm/vbx/t480)
+sudo nixos-rebuild switch --flake ~/nix-config#vkvm
 
 # roll back
 sudo nixos-rebuild --rollback
 
-# copy repo from Arch host to VM
+# copy repo from Arch host to a VM (example: vkvm / kvm)
 rsync -av --exclude='.git' --filter=':- .gitignore' \
-  /home/k/Projects/personal/nix-config/ k@<vm-ip>:~/nix-config/
+  /home/k/Projects/personal/nix-config/ kvm@<vm-ip>:~/nix-config/
 
 # garbage collect
 nix-collect-garbage -d
@@ -154,7 +166,8 @@ nix-collect-garbage -d
    `hosts/<host>/hardware-configuration.nix` with
    `nixos-generate-config --no-filesystems --show-hardware-config` if needed.
 4. From the repo root, run the installer for your target host — `t480` below,
-   or `vm` for the QEMU VM. This **ERASES the target disk**. The
+   `vkvm` for the QEMU/KVM VM, or `vbx` for VirtualBox. This **ERASES the target
+   disk**. The
    `--extra-experimental-features` flag covers stock ISOs that don't enable
    flakes by default:
    ```sh
@@ -165,5 +178,7 @@ nix-collect-garbage -d
    with the noctalia cache enabled. During partitioning, disko prompts you to
    set the LUKS disk-encryption passphrase — choose a strong one; you'll enter
    it on every boot.
-5. Reboot, then set your password: `passwd k`.
-6. Verify hibernation: `systemctl hibernate`, then power on and confirm resume.
+5. Reboot, then set your password — the installer prints the exact command for
+   the host's user (e.g. `passwd kvm`, `passwd vbox`, or `passwd k`).
+6. `t480` only — verify hibernation: `systemctl hibernate`, then power on and
+   confirm resume. (VMs don't hibernate.)

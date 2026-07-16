@@ -53,19 +53,47 @@
           echo ">>> Installing NixOS (TMPDIR on disk to avoid live-ISO RAM exhaustion)"
           mkdir -p /mnt/tmp
           # --no-root-passwd: skip the interactive root-password prompt; the
-          # autologin 'k' user sets its own password on first boot (see README)
+          # autologin user sets its own password on first boot (see README)
           TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt --no-root-passwd \
             --option extra-substituters https://noctalia.cachix.org \
             --option extra-trusted-public-keys noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
 
-          echo ">>> Done. Set a password on first boot: passwd k"
+          # Seed this repo into the new system so the editable configs resolve on
+          # first boot. Everything hangs off repoDir (/home/<user>/nix-config):
+          # niri/tmux-sessionizer are out-of-store symlinks into it, and zsh/tmux/
+          # git/alacritty source files from it. Without this the fresh install comes
+          # up with dangling symlinks and an empty shell until a manual git clone.
+          #
+          # Derive the user from the freshly-installed /mnt/etc/passwd (name, uid,
+          # gid, home in one shot) so it stays correct for any host, not just 'k'.
+          username="" uid="" gid="" home=""
+          while IFS=: read -r pw_name _ pw_uid pw_gid _ pw_home _; do
+            case "$pw_uid" in *[!0-9]*|"") continue ;; esac   # skip non-numeric uids
+            if [ "$pw_uid" -ge 1000 ] && [ "$pw_uid" -lt 65534 ]; then
+              username="$pw_name" uid="$pw_uid" gid="$pw_gid" home="$pw_home"
+              break   # first normal user (every host here has exactly one)
+            fi
+          done < /mnt/etc/passwd
+
+          if [ -n "$username" ]; then
+            echo ">>> Seeding repo to $home/nix-config for user '$username'"
+            mkdir -p "/mnt$home/nix-config"
+            cp -a ./. "/mnt$home/nix-config"          # -a keeps .git → real working copy
+            chown -R "$uid:$gid" "/mnt$home/nix-config"
+          else
+            echo "warning: no normal user in /mnt/etc/passwd — skipping repo seed" >&2
+          fi
+
+          [ -n "$username" ] || username="<user>"
+          echo ">>> Done. Set a password on first boot: passwd $username"
         '';
       };
     in
     {
       nixosConfigurations = {
-        vm   = lib.mkHost { hostname = "vm"; };
-        t480 = lib.mkHost { hostname = "t480"; };
+        vkvm = lib.mkHost { hostname = "vkvm"; user = "kvm";  };  # QEMU/KVM VM
+        vbx  = lib.mkHost { hostname = "vbx";  user = "vbox"; };  # VirtualBox VM
+        t480 = lib.mkHost { hostname = "t480"; };                 # ThinkPad (user: k)
       };
 
       apps.${system}.install = {

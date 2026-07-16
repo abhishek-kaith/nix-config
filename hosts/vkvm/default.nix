@@ -12,7 +12,7 @@
   ];
 
   networking = {
-    hostName = "vm";
+    hostName = "vkvm";
     networkmanager.enable = true;
   };
 
@@ -34,7 +34,7 @@
 
   security.sudo.wheelNeedsPassword = true;
 
-  # SSH — connect from Arch host with: ssh k@<vm-ip>
+  # SSH — connect from Arch host with: ssh kvm@<vm-ip>
   # password auth is fine here — local dev VM only, not network-exposed
   services.openssh = {
     enable = true;
