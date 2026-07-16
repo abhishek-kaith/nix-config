@@ -8,6 +8,7 @@
     ../../modules/home/niri.nix       # kdl config (out-of-store), TTY1 exec
     ../../modules/home/noctalia.nix   # noctalia shell
     ../../modules/home/alacritty.nix  # terminal
+    ../../modules/home/starship.nix   # prompt config (out-of-store, noctalia-themeable)
   ];
 
   home.username      = user;

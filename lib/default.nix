@@ -19,6 +19,11 @@
         {
           home-manager.useGlobalPkgs   = true;  # reuse system nixpkgs — no duplicate eval
           home-manager.useUserPackages = true;  # packages go to /etc/profiles/per-user/${user}
+          # noctalia edits some app configs in place (alacritty.toml, starship.toml)
+          # with `sed -i`, which replaces the home-manager symlink with a plain file.
+          # Without this, the next rebuild aborts with "file would be clobbered";
+          # with it, home-manager moves the stray file aside and re-links cleanly.
+          home-manager.backupFileExtension = "hm-bak";
           home-manager.users.${user}   = import ../hosts/${hostname}/home.nix;
           home-manager.extraSpecialArgs = {
             inherit inputs user;

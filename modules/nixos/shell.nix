@@ -21,20 +21,12 @@
     '';
   };
 
-  # starship prompt — works in any terminal, no nerd fonts needed
-  programs.starship = {
-    enable = true;
-    settings = {
-      add_newline = false;
-      character = {
-        success_symbol = "[❯](green)";
-        error_symbol   = "[❯](red)";
-      };
-      directory = {
-        truncation_length = 3;
-        truncate_to_repo  = true;
-      };
-      git_status.disabled = false;
-    };
-  };
+  # starship prompt — works in any terminal, no nerd fonts needed.
+  # Config lives in the repo at config/starship.toml, symlinked live-editable to
+  # ~/.config/starship.toml by modules/home/starship.nix. This module only enables
+  # the package + shell init; it deliberately sets no `settings`, because the NixOS
+  # starship module only forces STARSHIP_CONFIG to its own generated file when
+  # ~/.config/starship.toml is absent — and we want that user file to win so it can
+  # be edited live and themed by noctalia.
+  programs.starship.enable = true;
 }

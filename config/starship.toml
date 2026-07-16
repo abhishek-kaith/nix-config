@@ -1,0 +1,19 @@
+# starship prompt — live-editable config, symlinked to ~/.config/starship.toml.
+# The NixOS starship module (modules/nixos/shell.nix) only forces its own config
+# when ~/.config/starship.toml is ABSENT, so with this file present starship reads
+# it directly. noctalia themes the prompt by inserting `palette = "noctalia"` and a
+# marker-delimited `[palettes.noctalia]` block; that stays out of the way of the
+# settings below.
+
+add_newline = false
+
+[character]
+success_symbol = "[❯](green)"
+error_symbol = "[❯](red)"
+
+[directory]
+truncation_length = 3
+truncate_to_repo = true
+
+[git_status]
+disabled = false

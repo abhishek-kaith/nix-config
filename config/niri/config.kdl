@@ -6,6 +6,15 @@
 // noctalia is driven over IPC with `noctalia msg <command>` (verified against
 // the noctalia 5.0.0 binary).
 
+// noctalia writes its generated theme colors (focus-ring/border/shadow/etc.) to
+// ~/.config/niri/noctalia.kdl and merges them via this include. niri resolves the
+// relative path next to the *symlink* (~/.config/niri/), which is exactly where
+// noctalia writes it. Pre-declaring the include here means noctalia's apply.sh
+// finds it already present and never appends to this file (keeps it clean); a
+// blank noctalia.kdl is seeded by modules/home/niri.nix so the include always
+// resolves even before the first theme is applied.
+include "noctalia.kdl"
+
 input {
     keyboard {
         xkb {
