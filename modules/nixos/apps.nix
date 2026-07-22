@@ -33,4 +33,14 @@
     pavucontrol        # GUI audio mixer (per-app volume)
     keepassxc          # password manager (Firefox integration via native messaging)
   ];
+
+  # ── run apps that aren't in nixpkgs ──────────────────────────────
+  programs.appimage = {
+    enable = true;
+    binfmt = true;   # execute .AppImage files directly (./foo.AppImage)
+  };
+  services.flatpak.enable = true;   # Flathub apps (uses the xdg portals above).
+                                    # Add the remote once, then install:
+                                    #   flatpak remote-add --if-not-exists flathub \
+                                    #     https://flathub.org/repo/flathub.flatpakrepo
 }
