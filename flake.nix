@@ -11,9 +11,11 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    noctalia.url = "github:noctalia-dev/noctalia";
-    # intentionally NOT following nixpkgs — noctalia cachix is built with its own nixpkgs;
-    # overriding causes a hash mismatch and forces a full source compile
+    noctalia.url = "github:noctalia-dev/noctalia/cachix";
+    # Track the `cachix` branch (not `main`) so prebuilt binaries are guaranteed to be
+    # in noctalia's cache — avoids compiling the Qt/QML shell from source on rebuilds.
+    # Intentionally NOT following nixpkgs — the cache is built with noctalia's own
+    # nixpkgs; overriding it causes a hash mismatch and forces a full source compile.
 
     # hardware-specific tuning profiles (e.g. ThinkPad T480)
     nixos-hardware.url = "github:NixOS/nixos-hardware";

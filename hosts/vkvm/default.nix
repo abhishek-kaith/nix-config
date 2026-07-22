@@ -5,16 +5,16 @@
     inputs.disko.nixosModules.disko  # registers disko's NixOS options
     ./disko.nix                      # our disk layout — disko reads this at boot too
     ./hardware-configuration.nix     # kernel modules, CPU microcode (generated)
-    ../../modules/nixos/common.nix  # timezone, nix settings, base packages
-    ../../modules/nixos/shell.nix   # zsh, starship, fzf, zoxide
-    ../../modules/nixos/niri.nix      # compositor, portals, autologin
-    ../../modules/nixos/desktop.nix   # audio, fonts, polkit, overlay
+    ../../modules/nixos/base.nix      # nix settings, locale, console/tty, zram, sysctl
+    ../../modules/nixos/packages.nix  # system CLI toolbox
+    ../../modules/nixos/network.nix   # networkmanager, DNS (Quad9/Cloudflare), firewall
+    ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
+    ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
+    ../../modules/nixos/niri.nix      # compositor + session entry (autologin)
+    ../../modules/nixos/noctalia.nix  # noctalia overlay + binary cache + runtime deps
   ];
 
-  networking = {
-    hostName = "vkvm";
-    networkmanager.enable = true;
-  };
+  networking.hostName = "vkvm";  # networkmanager lives in modules/nixos/network.nix
 
   # systemd-boot: simple UEFI bootloader, no config file needed
   boot.loader = {

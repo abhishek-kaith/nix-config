@@ -5,6 +5,8 @@
     ../../modules/home/zsh.nix
     ../../modules/home/tmux.nix
     ../../modules/home/scripts.nix
+    ../../modules/home/xdg.nix        # user dirs, mime defaults
+    ../../modules/home/direnv.nix     # direnv + nix-direnv
     ../../modules/home/niri.nix       # kdl config (out-of-store), TTY1 exec
     ../../modules/home/noctalia.nix   # noctalia shell
     ../../modules/home/alacritty.nix  # terminal

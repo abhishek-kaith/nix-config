@@ -1,184 +1,165 @@
 # nix-config
 
-Flake-based NixOS configuration.
+Flake-based NixOS configuration for one laptop and two dev VMs. Everything is
+organised so that **shared concerns live in `modules/`** and **per-machine
+differences live in `hosts/`**.
 
 | Host   | Platform      | User   |
 |--------|---------------|--------|
+| `t480` | ThinkPad T480 | `k`    |
 | `vkvm` | QEMU/KVM VM   | `kvm`  |
 | `vbx`  | VirtualBox VM | `vbox` |
-| `t480` | ThinkPad T480 | `k`    |
+
+---
 
 ## Structure
 
 ```
-flake.nix
-lib/default.nix            # mkHost helper
-config/                    # native format files (tmux, scripts)
-modules/nixos/             # system modules (common, shell)
-modules/home/              # home-manager modules (git, zsh, tmux, scripts)
-hosts/vkvm/                # QEMU/KVM host (disko, hardware, home)
-hosts/vbx/                 # VirtualBox host
-hosts/t480/                # ThinkPad T480 host
+flake.nix                 # inputs, host list, the `install` app
+lib/default.nix           # mkHost helper — wires home-manager + specialArgs
+config/                   # native-format dotfiles, edited live (see below)
+
+modules/nixos/            # SYSTEM layer — imported by hosts/<h>/default.nix
+  base.nix                #   nix settings + gc, locale, console/TTY font, zram, sysctl
+  packages.nix            #   system-wide CLI toolbox (network/dev/archive/nix tools)
+  network.nix             #   NetworkManager, DNS (Quad9 + Cloudflare, DoT), firewall
+  shell.nix               #   zsh, fzf, zoxide, starship (package + shell init)
+  desktop.nix             #   audio, fonts, polkit, xdg-portals, gnome-keyring
+  niri.nix                #   niri compositor + session entry (TTY1 autologin)
+  noctalia.nix            #   noctalia overlay + binary cache + runtime deps
+  laptop.nix              #   upower, bluetooth, power-profiles (physical hosts only)
+
+modules/home/             # USER layer — imported by hosts/<h>/home.nix
+  git / zsh / tmux / scripts   #   shell + dotfile wiring
+  xdg.nix                 #   XDG user dirs + mime defaults
+  direnv.nix              #   direnv + nix-direnv
+  niri.nix / noctalia.nix #   niri kdl config + noctalia shell (home side)
+  alacritty.nix / starship.nix #   terminal + prompt (noctalia-themeable)
+
+hosts/<h>/                # PER-HOST — only what differs between machines
+  default.nix             #   hostname, bootloader, users, ssh, quirks + module imports
+  disko.nix               #   disk layout (partitioning)
+  hardware-configuration.nix   #   generated kernel modules / microcode
+  home.nix                #   home-manager imports for this host's user
 ```
+
+**Where does X go?** Anything hardware- or machine-specific (GPU tools, microcode,
+disk layout, guest additions, `hostName`) → `hosts/<h>/`. Anything shared → the
+matching `modules/nixos/*` or `modules/home/*` by concern.
 
 ---
 
-## Nix Commands
+## Installing a host (from the NixOS live ISO)
 
-### Check / evaluate config (run from repo root)
+1. Boot the live ISO, get networking (`nmtui` / `iwctl`), then clone the repo:
+   ```sh
+   nix-shell -p git --run 'git clone <repo-url> /tmp/nix-config'
+   cd /tmp/nix-config
+   ```
+2. New machine only: confirm the target disk with `lsblk -d`; if it isn't
+   `/dev/nvme0n1`, edit `device` in `hosts/<host>/disko.nix`, and regenerate
+   `hosts/<host>/hardware-configuration.nix` with
+   `nixos-generate-config --no-filesystems --show-hardware-config`.
 
-```bash
-# show flake outputs — quick sanity check
-nix flake show
+### Recommended: one-command installer
 
-# evaluate and type-check all modules without building
-nix flake check
-
-# full build — downloads everything, creates ./result symlink
-nix build .#nixosConfigurations.vkvm.config.system.build.toplevel
-
-# evaluate a specific value (useful for debugging options)
-nix eval .#nixosConfigurations.vkvm.config.networking.hostName
+```sh
+nix --extra-experimental-features 'nix-command flakes' run .#install -- t480
 ```
+This **erases the target disk**, then: partitions + mounts via disko → runs
+`nixos-install` (with `TMPDIR=/mnt/tmp` so the RAM-backed ISO `/tmp` doesn't
+overflow, and the noctalia cache enabled) → **seeds this repo to `~/nix-config`**
+on the new system so the editable configs resolve on first boot. disko will
+prompt for the LUKS passphrase during partitioning.
 
-### Update inputs
+### Manual (the same thing, by hand)
 
-```bash
-nix flake update            # update all inputs
-nix flake update nixpkgs    # update one input
+```sh
+disko --mode destroy,format,mount --flake .#t480      # partition + mount to /mnt
+nixos-install --flake .#t480 --root /mnt --no-root-passwd \
+  --option extra-substituters https://noctalia.cachix.org \
+  --option extra-trusted-public-keys noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+# then copy this repo to /mnt/home/<user>/nix-config yourself
 ```
+There is **no separate home-manager step** — home-manager runs as a NixOS module
+(see `lib/default.nix`), so `nixos-install` / `nixos-rebuild` activates the user
+config too.
+
+3. Reboot, then set your password — the installer prints the exact command
+   (`passwd k` / `passwd kvm` / `passwd vbox`). The bootstrap password is
+   `password`; **change it on first login.**
+4. `t480` only — verify hibernation: `systemctl hibernate`, power on, confirm resume.
 
 ---
 
-## Binary Caches (Cachix)
+## Binary cache (noctalia)
 
-Binary caches let Nix download pre-built packages instead of compiling from source.
+noctalia is a Qt/QML shell that is slow to compile, so we pull it prebuilt. The
+cache has to be configured in **two places for two different moments**:
 
-### Set up a cache (one-time, on Arch)
-
-```bash
-nix profile add nixpkgs#cachix   # install cachix CLI
-```
-
-After this, `nix build` picks up the cache automatically — no extra flags needed.
-
-### How to find the cachix command for a package
-
-1. Check the project's README / NixOS wiki page — most popular packages document it
-2. Search at **cachix.org** — every public cache has a page with the exact `cachix use <name>` command
-3. Check the flake's `README` or look for a `cachix.yaml` in the repo
-
-### Caches this config uses
-
-| Package   | Cache command          | Why                              |
-|-----------|------------------------|----------------------------------|
-| Noctalia  | `cachix use noctalia`  | C++ shell, slow to compile       |
-
-### Adding a cache permanently to NixOS config
-
-Once you've confirmed a cache works, add it to `modules/nixos/common.nix` so every rebuild uses it. The key values come from the cachix cache page at `cachix.org/<name>`.
-
----
-
-## Gotchas & Notes
-
-### niri: two modules, both needed
-
-| Layer | File | Responsibility |
+| Where | Whose Nix builds | Covers |
 |---|---|---|
-| NixOS | `modules/nixos/niri.nix` | enables `programs.niri`, sets `pkgs-unstable.niri`, autologin |
-| home-manager | `modules/home/niri.nix` | symlinks the editable `config/niri/config.kdl`, execs `niri-session` on TTY1 |
+| `--option extra-substituters …` in `nix run .#install` | the **live ISO** | the one-time install build (system config isn't on disk yet) |
+| `nix.settings` in `modules/nixos/noctalia.nix` | the **installed machine** | every later `nixos-rebuild` |
 
-niri is from `pkgs-unstable.niri` (needs ≥ 26.04 for blur) and comes from
-`cache.nixos.org` — **no special binary cache required**. noctalia (the shell)
-is started from `config/niri/config.kdl` and manages the wallpaper itself; its
-keybinds use `noctalia msg <command>` per the
-[noctalia v5 niri docs](https://docs.noctalia.dev/v5/compositor-settings/niri).
+Both use the same URL + key; keep them in sync. The flake also tracks noctalia's
+**`cachix` branch** (not `main`) so the commit you build is guaranteed to be in
+the cache — otherwise a rebuild can miss it and compile from source.
 
-### Editable configs: the repo must live at `~/nix-config`
+**Adding another cache in future:** get the `cachix use <name>` URL + public key
+from its page on `cachix.org`, then add them to a module's `nix.settings`
+(`extra-substituters` + `extra-trusted-public-keys`). Once it's in the system
+config, rebuilds use it automatically — no per-command flags.
 
-The external configs are referenced from the **working tree**, not the nix store,
-so they can be edited without a rebuild:
+---
+
+## Editable configs — the repo must live at `~/nix-config`
+
+Some configs are referenced from the **working tree**, not the nix store, so they
+can be edited without a rebuild. `repoDir` in `lib/default.nix` is
+`/home/<user>/nix-config`; the installer seeds it automatically (clone it yourself
+on an already-running host).
 
 | Config | How it's wired | Reload |
 |---|---|---|
 | niri | `mkOutOfStoreSymlink` → `~/.config/niri/config.kdl` | instant (niri watches) |
 | alacritty | `settings.general.import` of the repo TOML | instant (`live_config_reload`) |
+| starship | `mkOutOfStoreSymlink` → `~/.config/starship.toml` | new prompt |
 | tmux | `source-file` the repo conf | `prefix + R` |
 | git | `[include]` of the repo config | next `git` command |
 | zsh | managed `.zshrc` sources `config/zsh/rc.zsh` | new shell |
 | scripts | `mkOutOfStoreSymlink` → `~/.scripts/` | live |
 
-**How it gets there:** the installer (`nix run .#install`) seeds this repo into
-`~/nix-config` on the new system automatically, so a fresh install boots with
-these already wired up. For an already-running host, clone it to `~/nix-config`
-yourself. `repoDir` in `lib/default.nix` is `/home/<user>/nix-config` (the user
-differs per host — `kvm`, `vbox`, `k`); if the repo is absent, these configs fall
-back to app defaults (the zsh source is guarded).
-
-### Build on Arch, copy to a VM
-
-Noctalia (C++, no binary cache) needs more RAM than the VM has. Build on Arch, copy
-the result (example uses the `vkvm` host / `kvm` user — swap for `vbx`/`vbox`):
-
-```bash
-# on Arch
-nix build .#nixosConfigurations.vkvm.config.system.build.toplevel
-nix copy --to ssh://kvm@<vm-ip> .#nixosConfigurations.vkvm.config.system.build.toplevel
-
-# sync config + apply
-rsync -av --exclude='.git' --filter=':- .gitignore' \
-  /home/k/Projects/personal/nix-config/ kvm@<vm-ip>:~/nix-config/
-ssh kvm@<vm-ip> 'sudo nixos-rebuild switch --flake ~/nix-config#vkvm'
-```
+noctalia themes alacritty / starship / niri by writing **separate** theme files
+these configs import/include — it never edits a nix-managed symlink. `home-manager.backupFileExtension = "hm-bak"` is the safety net for the one case it
+still can.
 
 ---
 
 ## Day-to-day
 
 ```bash
-# apply config (on the host itself; use its own flake attr — vkvm/vbx/t480)
-sudo nixos-rebuild switch --flake ~/nix-config#vkvm
+# apply config (on the host itself, using its own attr — t480 / vkvm / vbx)
+sudo nixos-rebuild switch --flake ~/nix-config#t480
 
-# roll back
+# preview what a rebuild would change (uses nvd, from packages.nix)
+nvd diff /run/current-system result
+
+# roll back the last generation
 sudo nixos-rebuild --rollback
 
-# copy repo from Arch host to a VM (example: vkvm / kvm)
-rsync -av --exclude='.git' --filter=':- .gitignore' \
-  /home/k/Projects/personal/nix-config/ kvm@<vm-ip>:~/nix-config/
+# update inputs (stay current within 26.05, or bump the input URLs for 26.11)
+nix flake update              # everything
+nix flake update noctalia     # one input
+
+# quick checks
+nix flake check               # evaluate + typecheck all hosts
+nix eval .#nixosConfigurations.t480.config.networking.hostName
 
 # garbage collect
 nix-collect-garbage -d
 ```
 
----
-
-## Installing a host (from the NixOS live ISO)
-
-1. Boot the NixOS live ISO and get networking (`nmtui` or `iwctl`).
-2. Clone this repo and enter it:
-   ```sh
-   nix-shell -p git --run 'git clone <repo-url> /tmp/nix-config'
-   cd /tmp/nix-config
-   ```
-3. New machine only: confirm the target disk with `lsblk -d` and, if it isn't
-   `/dev/nvme0n1`, edit `device` in `hosts/<host>/disko.nix`. Regenerate
-   `hosts/<host>/hardware-configuration.nix` with
-   `nixos-generate-config --no-filesystems --show-hardware-config` if needed.
-4. From the repo root, run the installer for your target host — `t480` below,
-   `vkvm` for the QEMU/KVM VM, or `vbx` for VirtualBox. This **ERASES the target
-   disk**. The
-   `--extra-experimental-features` flag covers stock ISOs that don't enable
-   flakes by default:
-   ```sh
-   nix --extra-experimental-features 'nix-command flakes' run .#install -- t480
-   ```
-   It partitions+mounts via disko, sets `TMPDIR=/mnt/tmp` (the live ISO's `/tmp`
-   is RAM-backed and overflows on a desktop closure), and runs `nixos-install`
-   with the noctalia cache enabled. During partitioning, disko prompts you to
-   set the LUKS disk-encryption passphrase — choose a strong one; you'll enter
-   it on every boot.
-5. Reboot, then set your password — the installer prints the exact command for
-   the host's user (e.g. `passwd kvm`, `passwd vbox`, or `passwd k`).
-6. `t480` only — verify hibernation: `systemctl hibernate`, then power on and
-   confirm resume. (VMs don't hibernate.)
+> `system.stateVersion` / `home.stateVersion` (`26.05`) is a **compatibility marker
+> pinned to the install version** — leave it fixed even after upgrading to a newer
+> NixOS release.

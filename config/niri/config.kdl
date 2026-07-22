@@ -1,18 +1,3 @@
-// niri config — lives in the nix-config repo, symlinked to ~/.config/niri/config.kdl.
-// niri watches this file and hot-reloads on save (no rebuild needed).
-// Keybinds translated from the previous Hyprland Lua config; noctalia shell
-// integration per the noctalia v5 niri docs:
-//   https://docs.noctalia.dev/v5/compositor-settings/niri
-// noctalia is driven over IPC with `noctalia msg <command>` (verified against
-// the noctalia 5.0.0 binary).
-
-// noctalia writes its generated theme colors (focus-ring/border/shadow/etc.) to
-// ~/.config/niri/noctalia.kdl and merges them via this include. niri resolves the
-// relative path next to the *symlink* (~/.config/niri/), which is exactly where
-// noctalia writes it. Pre-declaring the include here means noctalia's apply.sh
-// finds it already present and never appends to this file (keeps it clean); a
-// blank noctalia.kdl is seeded by modules/home/niri.nix so the include always
-// resolves even before the first theme is applied.
 include "noctalia.kdl"
 
 input {
@@ -38,7 +23,20 @@ layout {
     }
 }
 
+// Global blur tuning (niri defaults). Per-surface blur is *requested* by the
+// window-rule / layer-rule background-effect blocks below; this only sets how it
+// looks. Uncomment `off` to disable blur everywhere.
+blur {
+    // off
+    passes 3
+    offset 3.0
+    noise 0.02
+    saturation 1.5
+}
+
 prefer-no-csd
+
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
 // noctalia (the shell) starts here and manages the wallpaper itself —
 // point it at config/wallpapers/ from noctalia's settings. No swaybg.
@@ -51,17 +49,33 @@ debug {
 
 binds {
     // apps / session
-    Mod+Return { spawn "alacritty"; }
-    Mod+Q { close-window; }
+    Mod+Shift+Slash { show-hotkey-overlay; }
+    Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
+    Mod+O repeat=false { toggle-overview; }
+    Mod+Q repeat=false { close-window; }
     Mod+Shift+E { quit; }
 
-    Mod+F { fullscreen-window; }
-    Mod+V { toggle-window-floating; }
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    Mod+V       { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
 
     // noctalia shell (v5 IPC: `noctalia msg <command>`)
     Mod+Space     { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
     Mod+S         { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
-    Mod+Comma     { spawn "noctalia" "msg" "settings-toggle"; }
     Mod+BackSpace { spawn "noctalia" "msg" "session" "lock"; }
 
     // focus — vim keys + arrows (H/L = columns, J/K = windows in a column)
@@ -146,10 +160,25 @@ window-rule {
     }
 }
 
-// float the noctalia settings window at a sensible size (noctalia v5 niri docs).
+// float the noctalia settings window at a sensible size (noctalia v5 niri docs),
+// with a blurred backdrop (only visible if the window itself is translucent).
 window-rule {
     match app-id="dev.noctalia.Noctalia.Settings"
     open-floating true
     default-column-width { fixed 1080; }
     default-window-height { fixed 920; }
+    background-effect {
+        blur true
+    }
+}
+
+// Blur behind noctalia's floating popup panels (launcher, control-center, …).
+// They share the "noctalia-panel" layer namespace (source: panel_manager.cpp);
+// this is niri's equivalent of the fuzzel `^launcher$` example. Blur shows only
+// where the panel background is translucent (set that in noctalia's settings).
+layer-rule {
+    match namespace="^noctalia-panel$"
+    background-effect {
+        blur true
+    }
 }

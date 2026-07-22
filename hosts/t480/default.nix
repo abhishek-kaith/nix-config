@@ -6,17 +6,17 @@
     inputs.disko.nixosModules.disko
     ./disko.nix
     ./hardware-configuration.nix
-    ../../modules/nixos/common.nix    # timezone, nix settings, zram, base packages
+    ../../modules/nixos/base.nix      # nix settings, locale, console/tty, zram, sysctl
+    ../../modules/nixos/packages.nix  # system CLI toolbox
+    ../../modules/nixos/network.nix   # networkmanager, DNS (Quad9/Cloudflare), firewall
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
-    ../../modules/nixos/niri.nix     # compositor, portals, autologin
-    ../../modules/nixos/desktop.nix   # audio, fonts, polkit, noctalia overlay
-    ../../modules/nixos/laptop.nix    # upower, bluetooth, power-profiles (noctalia prereqs)
+    ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
+    ../../modules/nixos/niri.nix      # compositor + session entry (autologin)
+    ../../modules/nixos/noctalia.nix  # noctalia overlay + binary cache + runtime deps
+    ../../modules/nixos/laptop.nix    # upower, bluetooth, power-profiles
   ];
 
-  networking = {
-    hostName = "t480";
-    networkmanager.enable = true;
-  };
+  networking.hostName = "t480";  # networkmanager lives in modules/nixos/network.nix
 
   # systemd-boot: simple UEFI bootloader
   boot.loader = {
