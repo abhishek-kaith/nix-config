@@ -8,6 +8,7 @@
     ./hardware-configuration.nix
     ../../modules/nixos/base.nix      # nix settings, locale, console/tty, zram, sysctl
     ../../modules/nixos/packages.nix  # system CLI toolbox
+    ../../modules/nixos/dev.nix       # nix-ld, podman, adb, chromium + scraper env
     ../../modules/nixos/network.nix   # networkmanager, DNS (Quad9/Cloudflare), firewall
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
