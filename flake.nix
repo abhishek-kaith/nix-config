@@ -20,6 +20,11 @@
     # hardware-specific tuning profiles (e.g. ThinkPad T480)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
+
+    # prebuilt, daily-updated nix-index database — no local `nix-index` runs;
+    # the DB refreshes whenever you `nix flake update`
+    nix-index-database.url = "github:nix-community/nix-index-database";
+    nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   # inputs@ binds ALL inputs as a single attribute set called `inputs`

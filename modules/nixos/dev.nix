@@ -1,5 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
+  imports = [ inputs.nix-index-database.nixosModules.default ];
+
   # Developer environment: the FHS/dynamic-linker shim, containers, Android tools,
   # a scraper-ready Chromium, and nix ergonomics. Language toolchains (node/python/
   # go/…) belong in per-project devShells via direnv — NOT here.
@@ -19,14 +21,17 @@
   };
 
   # ── nix ergonomics ───────────────────────────────────────────────
-  programs.nix-index.enable = true;               # nix-locate <file> → which package ships it
-  programs.command-not-found.enable = false;      # nix-index replaces the (flake-broken) default
+  # nix-index-database.nixosModules.default (imported above) feeds nix-index a
+  # prebuilt, daily-updated DB, so `nix-index` never runs locally — it refreshes
+  # with `nix flake update`.
+  programs.nix-index.enable = true;                # nix-locate + command-not-found hook
+  programs.nix-index-database.comma.enable = true; # `,` runs any program, backed by that DB
+  programs.command-not-found.enable = false;       # nix-index replaces the (flake-broken) default
 
   environment.systemPackages = with pkgs; [
     chromium              # scraper/automation browser (env below points tools at it)
     android-tools scrcpy  # adb + fastboot; scrcpy mirrors/controls a USB-connected phone
     docker-compose lazydocker dive   # container helpers
-    comma                 # `, <program>` runs any nixpkgs program without installing
   ];
 
   # ── environment ──────────────────────────────────────────────────
