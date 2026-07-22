@@ -13,6 +13,12 @@
     keyMap     = "us";
   };
 
+  # ── boot ─────────────────────────────────────────────────────────
+  # skip the systemd-boot menu and boot straight in. Hold Space (or any key)
+  # during boot to bring the menu up when you need to pick an older generation
+  # to roll back. Per-host bootloader enable lives in hosts/*/default.nix.
+  boot.loader.timeout = 0;
+
   # ── nix ──────────────────────────────────────────────────────────
   nix = {
     settings = {
