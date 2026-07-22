@@ -28,6 +28,7 @@
 
   # ── auth / secret service ────────────────────────────────────────
   security.polkit.enable = true;
+  programs.dconf.enable = true;                            # gsettings/dconf backend — GTK apps + noctalia's gsettings theme-set need it
   services.gnome.gnome-keyring.enable = true;              # Secret Service (browser creds, etc.)
   security.pam.services.login.enableGnomeKeyring = true;   # unlock keyring at the TTY autologin
 
