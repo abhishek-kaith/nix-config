@@ -47,9 +47,4 @@
       "org.freedesktop.impl.portal.Screenshot"  = [ "gnome" ];
     };
   };
-
-  # ── misc graphical tools ─────────────────────────────────────────
-  environment.systemPackages = with pkgs; [
-    imv   # lightweight Wayland image viewer
-  ];
 }

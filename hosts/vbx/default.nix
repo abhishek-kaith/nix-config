@@ -10,6 +10,7 @@
     ../../modules/nixos/network.nix   # networkmanager, DNS (Quad9/Cloudflare), firewall
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
+    ../../modules/nixos/apps.nix      # GUI apps: mpv, thunar, qimgv, satty, pdf
     ../../modules/nixos/niri.nix      # compositor + session entry (autologin)
     ../../modules/nixos/noctalia.nix  # noctalia overlay + binary cache + runtime deps
   ];

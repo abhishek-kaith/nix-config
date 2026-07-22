@@ -21,10 +21,15 @@
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "image/png"  = "imv.desktop";
-      "image/jpeg" = "imv.desktop";
-      # "text/html"       = "firefox.desktop";
-      # "application/pdf" = "firefox.desktop";
+      "image/png"        = "qimgv.desktop";
+      "image/jpeg"       = "qimgv.desktop";
+      "image/gif"        = "qimgv.desktop";
+      "image/webp"       = "qimgv.desktop";
+      "video/mp4"        = "mpv.desktop";
+      "video/x-matroska" = "mpv.desktop";
+      "video/webm"       = "mpv.desktop";
+      "application/pdf"  = "org.gnome.Papers.desktop";
+      # no browser yet — set text/html + x-scheme-handler/https once you install one
     };
   };
 }

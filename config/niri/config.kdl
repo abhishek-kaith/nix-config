@@ -124,12 +124,13 @@ binds {
     Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
     Mod+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
 
-    // screenshots (niri built-in; replaces grimblast). Print = interactive UI
-    // (pick region/window/output); Mod+Shift+S also opens it for muscle memory.
-    Print       { screenshot; }
-    Ctrl+Print  { screenshot-screen; }
-    Mod+Print   { screenshot-window; }
-    Mod+Shift+S { screenshot; }
+    // screenshots → annotate in satty (grim captures, slurp selects the region).
+    // satty has a crop tool, so trim any border / the full grab before saving.
+    // each saves a timestamped PNG to ~/Pictures/Screenshots AND copies to clipboard.
+    //   Print       = pick a region, then annotate
+    //   Shift+Print = whole screen (no region prompt), then crop/annotate in satty
+    Print       { spawn "sh" "-c" "grim -g \"$(slurp)\" - | satty -f - -o \"~/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png\" --copy-command wl-copy --early-exit"; }
+    Shift+Print { spawn "sh" "-c" "grim - | satty -f - -o \"~/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png\" --copy-command wl-copy --early-exit"; }
 
     // media / hardware keys → noctalia (shows its OSD). allow-when-locked so
     // volume/brightness still work on the lock screen.
