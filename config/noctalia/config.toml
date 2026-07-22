@@ -1,0 +1,59 @@
+# Noctalia base config (hand-managed). Noctalia reads this and merges its runtime
+# state (~/.local/state/noctalia/settings.toml) on top — it never writes here.
+# Trimmed to the settings that matter; machine-specific runtime cruft (lockscreen
+# pixel coords, per-monitor wallpaper paths) is left for noctalia to manage.
+config_version = 2
+
+[bar.default]
+background_opacity = 0.0
+center = [ "clock", "media" ]
+concave_edge_corners = false
+end = [ "tray", "clipboard", "battery", "volume", "network", "bluetooth", "brightness", "notifications", "session" ]
+margin_ends = 0
+radius = 0
+shadow = false
+start = [ "control-center", "launcher", "wallpaper", "workspaces" ]
+thickness = 30
+widget_spacing = 10
+
+[location]
+address = "Shimla, India"
+
+[plugins]
+enabled = []
+
+[shell]
+corner_radius_scale = 0.5
+
+    [shell.animation]
+    speed = 2.0
+
+    [shell.launcher]
+    categories = false
+
+    [shell.panel]
+    control_center_placement = "floating"
+    transparency_mode = "soft"
+
+[theme]
+source = "wallpaper"
+wallpaper_scheme = "m3-tonal-spot"
+
+    [theme.templates]
+    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "kcolorscheme", "niri", "qt", "starship" ]
+    community_ids = [ "pi-agent", "yazi" ]
+
+[widget.brightness]
+enabled = false
+
+[widget.launcher]
+enabled = false
+
+[widget.media]
+enabled = false
+
+[widget.network]
+show_label = false
+
+[widget.wallpaper]
+enabled = true

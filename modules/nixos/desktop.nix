@@ -20,7 +20,7 @@
     noto-fonts-color-emoji   # colour emoji — without it, glyphs render as tofu
   ];
   fonts.fontconfig.defaultFonts = {
-    monospace = [ "JetBrainsMono Nerd Font" ];
+    monospace = [ "Iosevka Nerd Font" "JetBrainsMono Nerd Font" ];
     sansSerif = [ "Noto Sans" ];
     serif     = [ "Noto Serif" ];
     emoji     = [ "Noto Color Emoji" ];

@@ -31,5 +31,6 @@
     xarchiver          # archive GUI + backend for thunar-archive-plugin
     ffmpegthumbnailer  # video thumbnails for tumbler
     pavucontrol        # GUI audio mixer (per-app volume)
+    keepassxc          # password manager (Firefox integration via native messaging)
   ];
 }

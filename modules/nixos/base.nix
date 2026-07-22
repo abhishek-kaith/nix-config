@@ -40,6 +40,9 @@
   # compressed RAM swap — eases memory pressure; coexists with disk hibernation swap
   zramSwap.enable = true;
 
+  # weekly SSD TRIM — keeps SSD performance and longevity
+  services.fstrim.enable = true;
+
   # ── light hardening (no desktop impact) ──────────────────────────
   boot.kernel.sysctl = {
     "kernel.kptr_restrict"               = 2;   # hide kernel pointers from userspace

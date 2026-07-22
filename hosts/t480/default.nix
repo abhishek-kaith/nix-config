@@ -15,6 +15,7 @@
     ../../modules/nixos/apps.nix      # GUI apps: mpv, thunar, qimgv, satty, pdf
     ../../modules/nixos/niri.nix      # compositor + session entry (autologin)
     ../../modules/nixos/noctalia.nix  # noctalia overlay + binary cache + runtime deps
+    ../../modules/nixos/syncthing.nix # file sync (opens 22000/tcp + 21027/udp)
     ../../modules/nixos/laptop.nix    # upower, bluetooth, power-profiles
   ];
 

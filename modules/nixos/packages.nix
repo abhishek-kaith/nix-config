@@ -13,6 +13,8 @@
     procs                   # modern `ps` (tree, colour, search)
     duf ncdu                # disk usage: duf = df, ncdu = interactive du
     bandwhich               # live per-process network bandwidth
+    pfetch fastfetch        # system info fetch (fastfetch = fast, modern)
+    acpi                    # battery / thermal / AC status
 
     # ── editors ───────────────────────────────────────────────────
     neovim vim

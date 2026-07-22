@@ -14,9 +14,9 @@ input {
 }
 
 layout {
-    gaps 10
+    gaps 5
     focus-ring {
-        width 2
+        width 1.5
     }
     border {
         off
@@ -41,6 +41,9 @@ screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 // noctalia (the shell) starts here and manages the wallpaper itself —
 // point it at config/wallpapers/ from noctalia's settings. No swaybg.
 spawn-at-startup "noctalia"
+
+// hide the top bar on startup (Mod+B toggles it); the sleep lets noctalia come up
+spawn-at-startup "sh" "-c" "sleep 2 && noctalia msg bar-hide"
 
 // niri's launcher activation works better for noctalia with this set (noctalia v5 docs).
 debug {
@@ -76,6 +79,9 @@ binds {
     // noctalia shell (v5 IPC: `noctalia msg <command>`)
     Mod+Space     { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
     Mod+S         { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+C         { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+W         { spawn "noctalia" "msg" "panel-toggle" "wallpaper"; }
+    Mod+B         { spawn "noctalia" "msg" "bar-toggle"; }
     Mod+BackSpace { spawn "noctalia" "msg" "session" "lock"; }
 
     // focus — vim keys + arrows (H/L = columns, J/K = windows in a column)
@@ -148,7 +154,7 @@ binds {
 // rounded corners for all windows; clip-to-geometry is also needed for the blur
 // below to follow the rounded shape.
 window-rule {
-    geometry-corner-radius 12
+    geometry-corner-radius 3
     clip-to-geometry true
 }
 

@@ -163,3 +163,42 @@ nix-collect-garbage -d
 > `system.stateVersion` / `home.stateVersion` (`26.05`) is a **compatibility marker
 > pinned to the install version** — leave it fixed even after upgrading to a newer
 > NixOS release.
+
+---
+
+## Configuring common things
+
+**DNS** (`modules/nixos/network.nix`) — Quad9 primary + Cloudflare fallback over
+DoT. Change providers via `networking.nameservers` (primary) and
+`services.resolved.settings.Resolve.FallbackDNS`. To go back to ISP/DHCP DNS,
+delete the `services.resolved` block and set
+`networking.networkmanager.dns = "default";`.
+
+**Firewall / ports** (`modules/nixos/network.nix`) — on and default-deny inbound.
+Open/close a port by editing the list:
+```nix
+networking.firewall.allowedTCPPorts = [ 8080 ];   # (or allowedUDPPorts)
+```
+sshd opens 22 itself; syncthing opens 22000/tcp + 21027/udp via its module.
+
+**Git identity** — not stored in the repo. Set it once per machine:
+```bash
+git config --global user.name  "Your Name"
+git config --global user.email "you@example.com"
+```
+The rest (rebase-on-pull, autostash, prune, zdiff3, histogram, …) is in
+`config/git/config`.
+
+**Syncthing** — web UI at http://127.0.0.1:8384 (localhost only). Add folders /
+pair devices there; nix won't overwrite them.
+
+**Keybinds (niri + noctalia)** — `Mod+B` toggle top bar (hidden on login),
+`Mod+C` clipboard, `Mod+W` wallpaper picker, `Mod+Space` launcher,
+`Print`/`Shift+Print` region/full screenshot → satty.
+
+**Firefox** — default browser, hardened (no telemetry, strict tracking protection,
+HTTPS-only) with uBlock Origin + KeePassXC-Browser force-installed. Enable
+"Browser Integration" in KeePassXC's settings to complete the KeePassXC link.
+
+**noctalia config** — editable base at `config/noctalia/config.toml` (t480); the
+app merges its runtime state (`~/.local/state/noctalia/settings.toml`) on top.

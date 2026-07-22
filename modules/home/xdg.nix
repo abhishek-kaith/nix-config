@@ -28,8 +28,10 @@
       "video/mp4"        = "mpv.desktop";
       "video/x-matroska" = "mpv.desktop";
       "video/webm"       = "mpv.desktop";
-      "application/pdf"  = "org.gnome.Papers.desktop";
-      # no browser yet — set text/html + x-scheme-handler/https once you install one
+      "application/pdf"        = "org.gnome.Papers.desktop";
+      "text/html"              = "firefox.desktop";
+      "x-scheme-handler/http"  = "firefox.desktop";
+      "x-scheme-handler/https" = "firefox.desktop";
     };
   };
 }
