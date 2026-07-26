@@ -1,20 +1,16 @@
-# Noctalia base config (hand-managed). Noctalia reads this and merges its runtime
-# state (~/.local/state/noctalia/settings.toml) on top — it never writes here.
-# Trimmed to the settings that matter; machine-specific runtime cruft (lockscreen
-# pixel coords, per-monitor wallpaper paths) is left for noctalia to manage.
-config_version = 2
-
-[bar.default]
-background_opacity = 0.0
-center = [ "clock", "media" ]
-concave_edge_corners = false
-end = [ "tray", "clipboard", "battery", "volume", "network", "bluetooth", "brightness", "notifications", "session" ]
-margin_ends = 0
-radius = 0
-shadow = false
-start = [ "control-center", "launcher", "wallpaper", "workspaces" ]
-thickness = 30
-widget_spacing = 10
+# Noctalia base config (hand-managed). Noctalia never writes to this file — it
+# merges on top of it. Load order is: built-in defaults → this file → noctalia's
+# own ~/.local/state/noctalia/settings.toml. settings.toml loads LAST, so anything
+# you change in the GUI silently wins over what is written here until you reset it
+# there. If a setting below appears to have no effect, that is the first place to look.
+#
+# Trimmed to what we actually care about; machine-specific runtime state
+# (lockscreen coords, per-monitor wallpaper paths) is left for noctalia to manage.
+#
+# NOTE: config_version is deliberately absent. It is an app-owned migration marker
+# that noctalia stamps into settings.toml — the value that used to sit here (2) was
+# stale anyway, since the current schema version is 7, and a stale marker in the
+# user layer invites migrations to re-run against hand-written settings.
 
 [location]
 address = "Shimla, India"
@@ -22,8 +18,43 @@ address = "Shimla, India"
 [plugins]
 enabled = []
 
+# ── theme ────────────────────────────────────────────────────────────────────
+[theme]
+# "nice blue", verified against noctalia's palette source rather than by name:
+# Tokyo-Night is the only bundled palette whose primary stays blue in BOTH modes
+# (#7aa2f7 dark / #2e7de9 light). Nord's dark primary #8fbcbb is really teal, and
+# the stock "Noctalia" palette is yellow in dark, indigo in light.
+# Other bundled options: Ayu, Catppuccin, Dracula, Eldritch, Gruvbox, Kanagawa,
+# Noctalia, Nord, "Rosé Pine".
+mode    = "auto"          # dark | light | auto — auto follows sunrise/sunset for [location]
+source  = "builtin"       # builtin | wallpaper | community | custom
+builtin = "Tokyo-Night"
+
+# To go back to colours generated from the wallpaper instead, set
+# source = "wallpaper" and pick a generator:
+#   m3-tonal-spot | m3-content | m3-fruit-salad | m3-rainbow | m3-monochrome
+#   vibrant | faithful | soft | dysfunctional | muted
+# wallpaper_scheme = "m3-tonal-spot"
+
+    [theme.templates]
+    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "kcolorscheme", "niri", "qt", "starship" ]
+    # pywalfox-beta4 themes Firefox via the Pywalfox extension + a native-messaging
+    # host noctalia installs (see modules/home/firefox.nix). The docs are explicit
+    # that the legacy "pywalfox" template conflicts — do not add both.
+    community_ids = [ "pi-agent", "pywalfox-beta4", "yazi" ]
+
+# ── shell ────────────────────────────────────────────────────────────────────
 [shell]
 corner_radius_scale = 0.5
+
+# Register noctalia as the polkit authentication agent. security.polkit.enable in
+# modules/nixos/desktop.nix only starts the polkit *daemon*; without an agent there
+# is nothing to draw the password prompt, so anything needing privilege escalation
+# just fails with no visible reason.
+polkit_agent = true
+
+# niri-only: start typing in the overview (Mod+O) to filter and launch apps.
+niri_overview_type_to_launch_enabled = true
 
     [shell.animation]
     speed = 2.0
@@ -33,27 +64,36 @@ corner_radius_scale = 0.5
 
     [shell.panel]
     control_center_placement = "floating"
+    # translucent panels — this is what gives the niri blur layer-rule something to
+    # blur. With transparency_mode = "solid" the blur rule is a no-op.
     transparency_mode = "soft"
 
-[theme]
-source = "wallpaper"
-wallpaper_scheme = "m3-tonal-spot"
+# ── bar ──────────────────────────────────────────────────────────────────────
+[bar.default]
+background_opacity   = 0.0   # fully transparent; niri's layer-rule blurs behind it
+concave_edge_corners = false
+margin_ends          = 0
+radius               = 0
+shadow               = false
+thickness            = 30
+widget_spacing       = 10
 
-    [theme.templates]
-    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "kcolorscheme", "niri", "qt", "starship" ]
-    community_ids = [ "pi-agent", "yazi" ]
+# "Minimal but useful": the bar carries STATUS — things worth reading at a glance —
+# plus the two entry points that open everything else. Anything that already has a
+# keybind is deliberately NOT here, because a permanently-visible button for a
+# one-keystroke action is just noise:
+#   launcher  Mod+Space      wallpaper Mod+W
+#   clipboard Mod+C          settings  Mod+I
+# (The previous config listed launcher/media/brightness in these lanes while ALSO
+#  setting enabled = false on those widgets, so they silently never rendered.)
+start  = [ "workspaces" ]
+center = [ "clock" ]
+end    = [ "tray", "network", "bluetooth", "volume", "battery", "notifications", "control-center", "session" ]
 
-[widget.brightness]
-enabled = false
+# ── per-widget overrides ─────────────────────────────────────────────────────
+# Top-level, NOT nested under [bar.default] — TOML ignores indentation, so the
+# table path is literally `widget.network` and it applies to that widget on every bar.
 
-[widget.launcher]
-enabled = false
-
-[widget.media]
-enabled = false
-
+# icon only — the SSID label makes the right side jump around on reconnect
 [widget.network]
 show_label = false
-
-[widget.wallpaper]
-enabled = true
