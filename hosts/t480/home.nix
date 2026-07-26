@@ -14,6 +14,7 @@
     ../../modules/home/noctalia.nix   # noctalia shell
     ../../modules/home/alacritty.nix  # terminal
     ../../modules/home/starship.nix   # prompt config (out-of-store, noctalia-themeable)
+    ../../modules/home/easyeffects.nix # mic denoise/AGC chain (laptop mic)
   ];
 
   # t480-only: editable noctalia base config (laptop-specific — eDP-1, location).
