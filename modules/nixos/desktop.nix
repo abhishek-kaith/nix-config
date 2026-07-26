@@ -26,6 +26,11 @@
     emoji     = [ "Noto Color Emoji" ];
   };
 
+  # ── wayland session env ──────────────────────────────────────────
+  # Not niri-specific: any Wayland compositor wants Electron/Chromium apps running
+  # natively rather than through XWayland.
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
   # ── auth / secret service ────────────────────────────────────────
   security.polkit.enable = true;
   programs.dconf.enable = true;                            # gsettings/dconf backend — GTK apps + noctalia's gsettings theme-set need it
@@ -33,19 +38,10 @@
   security.pam.services.login.enableGnomeKeyring = true;   # unlock keyring at the TTY autologin
 
   # ── xdg portals (file pickers + screencast under Wayland) ────────
-  # niri is a Smithay compositor, so screencast goes through the GNOME portal,
-  # NOT xdg-desktop-portal-wlr (which won't capture under niri).
-  xdg.portal = {
-    enable = true;
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-gtk       # file chooser + fallback
-      xdg-desktop-portal-gnome     # screencast / screenshot (needs PipeWire, above)
-    ];
-    config.niri = {
-      default = [ "gnome" "gtk" ];
-      "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
-      "org.freedesktop.impl.portal.ScreenCast"  = [ "gnome" ];
-      "org.freedesktop.impl.portal.Screenshot"  = [ "gnome" ];
-    };
-  };
+  # Not configured here, on purpose. Which portal backend serves screencast is a
+  # property of the compositor, not of "the desktop" — niri needs the GNOME one,
+  # a wlroots compositor needs xdg-desktop-portal-wlr — so the compositor's own
+  # NixOS module owns this. `programs.niri` (modules/nixos/niri.nix) already sets
+  # xdg.portal.enable, both backends, and config.niri; a second compositor brings
+  # its own. PipeWire above is the shared prerequisite screencast needs either way.
 }
