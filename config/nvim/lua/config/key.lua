@@ -8,17 +8,26 @@ vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 -- Update Neovim
 vim.keymap.set("n", "<leader>o", ":update<CR> :source<CR>")
 
--- Fzf
-vim.api.nvim_set_keymap("n", "<C-\\>", [[<Cmd>lua require"fzf-lua".buffers()<CR>]], {})
-vim.api.nvim_set_keymap("n", "<C-k>", [[<Cmd>lua require"fzf-lua".builtin()<CR>]], {})
-vim.api.nvim_set_keymap("n", "<C-p>", [[<Cmd>lua require"fzf-lua".files()<CR>]], {})
-vim.api.nvim_set_keymap("n", "<C-l>", [[<Cmd>lua require"fzf-lua".live_grep()<CR>]], {})
-vim.api.nvim_set_keymap("n", "<C-g>", [[<Cmd>lua require"fzf-lua".grep_project()<CR>]], {})
-vim.api.nvim_set_keymap("n", "<F1>", [[<Cmd>lua require"fzf-lua".help_tags()<CR>]], {})
+-- Fzf — desc is what which-key shows in the popup
+local fzf = function(fn)
+  return function()
+    require("fzf-lua")[fn]()
+  end
+end
+vim.keymap.set("n", "<C-\\>", fzf("buffers"), { desc = "Find buffers" })
+vim.keymap.set("n", "<C-k>", fzf("builtin"), { desc = "Find fzf-lua pickers" })
+vim.keymap.set("n", "<C-p>", fzf("files"), { desc = "Find files" })
+vim.keymap.set("n", "<C-l>", fzf("live_grep"), { desc = "Live grep" })
+vim.keymap.set("n", "<C-g>", fzf("grep_project"), { desc = "Grep project" })
+vim.keymap.set("n", "<F1>", fzf("help_tags"), { desc = "Find help tags" })
 
 -- Grapple
-vim.keymap.set("n", "<leader>a", ":lua require('grapple').toggle()<CR>")
-vim.keymap.set("n", "<C-e>", ":lua require('grapple').toggle_tags()<CR>")
+vim.keymap.set("n", "<leader>a", function()
+  require("grapple").toggle()
+end, { desc = "Grapple: toggle file tag" })
+vim.keymap.set("n", "<C-e>", function()
+  require("grapple").toggle_tags()
+end, { desc = "Grapple: toggle tag list" })
 
 -- Lsp
 vim.keymap.set("n", "gd", ":lua vim.lsp.buf.definition()<CR>", { desc = "Go to definition" })
@@ -28,7 +37,11 @@ vim.keymap.set("n", "gr", ":lua vim.lsp.buf.references()<CR>", { desc = "List re
 vim.keymap.set("n", "<leader>rn", ":lua vim.lsp.buf.rename()<CR>", { desc = "Rename symbol" })
 vim.keymap.set("n", "<leader>ca", ":lua vim.lsp.buf.code_action()<CR>", { desc = "Code action" })
 vim.keymap.set("n", "<leader>q", ":lua vim.diagnostic.setloclist()<CR>", { desc = "Set quickfix list" })
-vim.keymap.set("n", "<leader>f", ":lua vim.lsp.buf.format({ async = true })<CR>", { desc = "Format buffer" })
+-- conform routes to stylua/prettierd per filetype and falls back to the LSP when
+-- the filetype has no formatter configured (see FORMATTING in base.lua)
+vim.keymap.set("n", "<leader>f", function()
+  require("conform").format({ async = true, lsp_format = "fallback" })
+end, { desc = "Format buffer" })
 
 local diagnostic_float_win = nil
 local function toggle_diagnostic_float()
@@ -65,7 +78,7 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   desc = "Highlight when yanking (copying) text",
   group = vim.api.nvim_create_augroup("kickstart-highlight-yank", { clear = true }),
   callback = function()
-    vim.highlight.on_yank()
+    vim.hl.on_yank() -- vim.highlight was renamed to vim.hl (:help deprecated)
   end,
 })
 

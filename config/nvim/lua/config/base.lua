@@ -24,7 +24,7 @@ vim.o.shiftwidth = 2 -- Indentation = 2 spaces
 vim.o.breakindent = true -- Indent wrapped lines properly
 
 -- Search Behavior
-vim.o.hlsearch = true -- Don't highlight matches by default
+vim.o.hlsearch = true -- Highlight search matches (<Esc> clears them — see key.lua)
 vim.o.ignorecase = true -- Ignore case when searching...
 vim.o.smartcase = true -- ...unless capital letters are used
 
@@ -69,337 +69,311 @@ vim.api.nvim_create_user_command("CopyFDP", function()
 end, {})
 
 vim.api.nvim_create_user_command("CopyCWD", function()
-	vim.fn.setreg("+", vim.loop.cwd())
+	vim.fn.setreg("+", vim.uv.cwd())
 end, {})
 
 -- =========================
--- Lazy.nvim bootstrap
+-- Plugin manager: vim.pack
 -- =========================
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-	vim.fn.system({
-		"git",
-		"clone",
-		"--filter=blob:none",
-		"https://github.com/folke/lazy.nvim.git",
-		"--branch=stable",
-		lazypath,
+-- Neovim 0.12's built-in manager (`:help vim.pack`). It clones into
+-- stdpath("data")/site/pack/core/opt and records revisions in
+-- config/nvim/nvim-pack-lock.json — commit that file, and every host installs
+-- the exact same plugin revisions. `:lua vim.pack.update()` fetches updates and
+-- opens a confirmation buffer (:write to accept, :quit to discard).
+--
+-- Unlike lazy.nvim there is no lazy-loading and no dependency resolution: every
+-- plugin below loads at startup, and dependencies must be listed before the
+-- plugin that needs them.
+
+---@param repo string
+---@return string
+local function gh(repo)
+	return "https://github.com/" .. repo
+end
+
+-- Build hooks. Must be registered BEFORE the first vim.pack.add() so they also
+-- fire on a first-run install, not just on later updates (`:help vim.pack-events`).
+vim.api.nvim_create_autocmd("PackChanged", {
+	callback = function(ev)
+		local name, kind = ev.data.spec.name, ev.data.kind
+		if kind ~= "install" and kind ~= "update" then
+			return
+		end
+
+		if name == "nvim-treesitter" then
+			-- the plugin may not be loaded yet when installing from the lockfile
+			if not ev.data.active then
+				vim.cmd.packadd("nvim-treesitter")
+			end
+			vim.cmd("TSUpdate")
+		elseif name == "LuaSnip" and vim.fn.executable("make") == 1 then
+			-- optional regex-transform support for snippets; harmless if it fails
+			vim.system({ "make", "install_jsregexp" }, { cwd = ev.data.path })
+		end
+	end,
+})
+
+----------------------------------------------------------------------
+-- COLOURSCHEME
+----------------------------------------------------------------------
+do
+	vim.pack.add({ gh("folke/tokyonight.nvim") })
+	require("tokyonight").setup({
+		-- transparent so the terminal's own (noctalia-managed) backdrop shows
+		-- through. Use the theme's options rather than clearing Normal/NormalFloat
+		-- by hand: these propagate to every group tokyonight defines, so float
+		-- borders, popups and notifications stay consistent with the editor
+		-- instead of keeping a solid background.
+		transparent = true,
+		styles = {
+			comments = { italic = false },
+			floats = "transparent",
+			sidebars = "transparent",
+		},
+	})
+	vim.cmd.colorscheme("tokyonight-night")
+end
+
+----------------------------------------------------------------------
+-- UI / UX
+----------------------------------------------------------------------
+do
+	vim.pack.add({
+		gh("folke/which-key.nvim"),
+		gh("folke/todo-comments.nvim"),
+		gh("NMAC427/guess-indent.nvim"),
+		gh("nvim-lua/plenary.nvim"), -- dependency of todo-comments + lazygit.nvim
+	})
+
+	require("which-key").setup({ delay = 0 })
+	require("guess-indent").setup({}) -- match a file's existing indentation
+	require("todo-comments").setup({ signs = false })
+end
+
+----------------------------------------------------------------------
+-- NAVIGATION
+----------------------------------------------------------------------
+do
+	vim.pack.add({
+		gh("nvim-tree/nvim-web-devicons"), -- dependency of fzf-lua
+		gh("ibhagwan/fzf-lua"),
+		gh("cbochs/grapple.nvim"),
+	})
+
+	-- "fzf-native" profile — uses the real fzf binary (system closure) rather
+	-- than the Lua fuzzy matcher
+	require("fzf-lua").setup({ "fzf-native" })
+	require("grapple").setup({ icons = false })
+end
+
+----------------------------------------------------------------------
+-- LSP + MASON
+----------------------------------------------------------------------
+do
+	-- Servers to install and enable. The table key is the lspconfig name;
+	-- mason-lspconfig translates it to the mason package name.
+	local servers = {
+		lua_ls = {
+			settings = {
+				Lua = {
+					runtime = { version = "LuaJIT" },
+					diagnostics = { globals = { "vim", "require" } },
+					workspace = { library = vim.api.nvim_get_runtime_file("", true) },
+					telemetry = { enable = false },
+					format = { enable = false }, -- stylua does the formatting (see FORMATTING)
+				},
+			},
+		},
+		ts_ls = {},
+		tailwindcss = {},
+		clangd = {},
+	}
+
+	vim.pack.add({
+		gh("neovim/nvim-lspconfig"),
+		gh("mason-org/mason.nvim"),
+		gh("mason-org/mason-lspconfig.nvim"),
+		gh("WhoIsSethDaniel/mason-tool-installer.nvim"),
+	})
+
+	require("mason").setup({})
+	-- automatic_enable = false: the loop below enables servers explicitly, so
+	-- what runs is exactly what's in `servers` above
+	require("mason-lspconfig").setup({ automatic_enable = false })
+
+	local ensure_installed = vim.tbl_keys(servers)
+	vim.list_extend(ensure_installed, {
+		"stylua", -- lua formatter
+		"prettierd", -- js/ts/css/json/yaml/markdown formatter daemon
+	})
+	require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
+
+	for name, server in pairs(servers) do
+		vim.lsp.config(name, server)
+		vim.lsp.enable(name)
+	end
+end
+
+----------------------------------------------------------------------
+-- FORMATTING
+----------------------------------------------------------------------
+do
+	vim.pack.add({ gh("stevearc/conform.nvim") })
+
+	local prettier = { "prettierd", "prettier", stop_after_first = true }
+	require("conform").setup({
+		notify_on_error = false,
+		-- lsp_format = "fallback": use a formatter below when the filetype has one,
+		-- otherwise fall back to the LSP (so c/cpp still go through clangd) and do
+		-- nothing at all when neither exists.
+		default_format_opts = { lsp_format = "fallback" },
+		format_on_save = { timeout_ms = 500, lsp_format = "fallback" },
+		formatters_by_ft = {
+			lua = { "stylua" },
+			javascript = prettier,
+			javascriptreact = prettier,
+			typescript = prettier,
+			typescriptreact = prettier,
+			css = prettier,
+			html = prettier,
+			json = prettier,
+			yaml = prettier,
+			markdown = prettier,
+		},
 	})
 end
 
-vim.opt.rtp:prepend(lazypath)
+----------------------------------------------------------------------
+-- AUTOCOMPLETE + SNIPPETS
+----------------------------------------------------------------------
+do
+	vim.pack.add({
+		{ src = gh("L3MON4D3/LuaSnip"), version = vim.version.range("2.*") },
+		gh("rafamadriz/friendly-snippets"),
+		{ src = gh("saghen/blink.cmp"), version = vim.version.range("1.*") },
+		gh("monkoose/neocodeium"),
+	})
 
-require("lazy").setup({
-	{
-		"folke/tokyonight.nvim",
-		lazy = false,
-		priority = 1000,
-		config = function()
-			local function apply_theme(theme)
-				theme = (theme or ""):gsub("%s+", ""):gsub("'", ""):lower()
-				local is_dark = theme == "" or theme:find("dark")
-				vim.o.background = is_dark and "dark" or "light"
-				vim.cmd.colorscheme(is_dark and "tokyonight-night" or "tokyonight-day")
+	require("luasnip.loaders.from_vscode").lazy_load()
 
-				vim.api.nvim_set_hl(0, "Normal", { bg = "NONE" })
-				vim.api.nvim_set_hl(0, "NormalFloat", { bg = "NONE" })
-			end
-
-			local function get_system_theme()
-				local h = io.popen("gsettings get org.gnome.desktop.interface color-scheme")
-				local result = h and h:read("*a") or "dark"
-				if h then
-					h:close()
-				end
-				return result
-			end
-
-			apply_theme(get_system_theme())
-
-			vim.api.nvim_create_user_command("SyncSystemTheme", function()
-				apply_theme(get_system_theme())
-			end, {})
-
-			-- File watcher for external theme changes
-			local file = "/tmp/nvim-theme-reload"
-			---@diagnostic disable-next-line: undefined-field
-			local timer, handle = vim.uv.new_timer(), vim.uv.new_fs_event()
-			handle:start(file, {}, function()
-				timer:stop()
-				timer:start(50, 0, function()
-					vim.schedule(function()
-						vim.cmd("hi clear | syntax reset")
-						apply_theme(vim.fn.readfile(file)[1])
-					end)
-				end)
-			end)
-		end,
-	},
-	----------------------------------------------------------------------
-	-- NAVIGATION
-	----------------------------------------------------------------------
-	{
-		"ibhagwan/fzf-lua",
-		dependencies = { "nvim-tree/nvim-web-devicons" },
-		config = function()
-			require("fzf-lua").setup({ "fzf-native" })
-		end,
-	},
-
-	{
-		"cbochs/grapple.nvim",
-		config = function()
-			require("grapple").setup({ icons = false })
-		end,
-	},
-
-	----------------------------------------------------------------------
-	-- LSP + MASON
-	----------------------------------------------------------------------
-	{
-		"neovim/nvim-lspconfig",
-	},
-
-	{
-		"mason-org/mason.nvim",
-		config = true,
-	},
-
-	{
-		"mason-org/mason-lspconfig.nvim",
-		dependencies = { "mason-org/mason.nvim", "neovim/nvim-lspconfig" },
-		config = function()
-			require("mason-lspconfig").setup()
-		end,
-	},
-
-	{
-		"WhoIsSethDaniel/mason-tool-installer.nvim",
-		dependencies = { "mason-org/mason.nvim" },
-		config = function()
-			require("mason-tool-installer").setup({
-				ensure_installed = {
-					"lua_ls",
-					"stylua",
-					"ts_ls",
-					"tailwindcss",
-					"clangd",
-				},
-			})
-		end,
-	},
-
-	----------------------------------------------------------------------
-	-- AUTOCOMPLETE + SNIPPETS
-	----------------------------------------------------------------------
-
-	-- add this to the file where you setup your other plugins:
-	{
-		"monkoose/neocodeium",
-		event = "VeryLazy",
-		config = function()
-			local neocodeium = require("neocodeium")
-			neocodeium.setup()
-			vim.keymap.set("i", "<A-f>", neocodeium.accept)
-		end,
-	},
-	{
-		"Saghen/blink.cmp",
-		version = "v1.6.0",
-		dependencies = {
-			"L3MON4D3/LuaSnip",
-			"rafamadriz/friendly-snippets",
-		},
-		config = function()
-			require("luasnip.loaders.from_vscode").lazy_load()
-
-			require("blink.cmp").setup({
-				signature = { enabled = true },
-				completion = {
-					documentation = {
-						auto_show = true,
-						auto_show_delay_ms = 500,
-					},
-					menu = {
-						auto_show = true,
-						draw = {
-							treesitter = { "lsp" },
-							columns = {
-								{ "kind_icon", "label", "label_description", gap = 1 },
-								{ "kind" },
-							},
-						},
-					},
-				},
-			})
-		end,
-	},
-	{ -- Highlight, edit, and navigate code
-		"nvim-treesitter/nvim-treesitter",
-		lazy = false,
-		build = ":TSUpdate",
-		branch = "main",
-		-- [[ Configure Treesitter ]] See `:help nvim-treesitter-intro`
-		config = function()
-			local parsers = {
-				"bash",
-				"c",
-				"diff",
-				"html",
-				"lua",
-				"luadoc",
-				"markdown",
-				"markdown_inline",
-				"query",
-				"vim",
-				"vimdoc",
-				"typescript",
-				"javascript",
-				"css",
-				"elixir",
-				"json",
-				"rust",
-				"toml",
-				"yaml",
-				"tsx",
-			}
-			require("nvim-treesitter").install(parsers)
-			vim.api.nvim_create_autocmd("FileType", {
-				callback = function(args)
-					local buf, filetype = args.buf, args.match
-
-					local language = vim.treesitter.language.get_lang(filetype)
-					if not language then
-						return
-					end
-
-					-- check if parser exists and load it
-					if not vim.treesitter.language.add(language) then
-						return
-					end
-					-- enables syntax highlighting and other treesitter features
-					vim.treesitter.start(buf, language)
-
-					-- enables treesitter based folds
-					-- for more info on folds see `:help folds`
-					-- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-					-- vim.wo.foldmethod = 'expr'
-
-					-- enables treesitter based indentation
-					vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-				end,
-			})
-		end,
-	},
-
-	----------------------------------------------------------------------
-	-- TREESITTER
-	----------------------------------------------------------------------
-	{ -- Highlight, edit, and navigate code
-		"nvim-treesitter/nvim-treesitter",
-		lazy = false,
-		build = ":TSUpdate",
-		branch = "main",
-		-- [[ Configure Treesitter ]] See `:help nvim-treesitter-intro`
-		config = function()
-			local parsers = {
-				"bash",
-				"c",
-				"diff",
-				"html",
-				"lua",
-				"luadoc",
-				"markdown",
-				"markdown_inline",
-				"query",
-				"vim",
-				"vimdoc",
-				"typescript",
-				"javascript",
-				"css",
-				"elixir",
-				"json",
-				"rust",
-				"toml",
-				"yaml",
-			}
-			require("nvim-treesitter").install(parsers)
-			vim.api.nvim_create_autocmd("FileType", {
-				callback = function(args)
-					local buf, filetype = args.buf, args.match
-
-					local language = vim.treesitter.language.get_lang(filetype)
-					if not language then
-						return
-					end
-
-					-- check if parser exists and load it
-					if not vim.treesitter.language.add(language) then
-						return
-					end
-					-- enables syntax highlighting and other treesitter features
-					vim.treesitter.start(buf, language)
-
-					-- enables treesitter based folds
-					-- for more info on folds see `:help folds`
-					-- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
-					-- vim.wo.foldmethod = 'expr'
-
-					-- enables treesitter based indentation
-					vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-				end,
-			})
-		end,
-	},
-	--opts.incremental_selection = {
-	--  enable = true,
-	--  keymaps = {
-	--    init_selection = "<C-space>",
-	--    node_incremental = "<C-space>",
-	--    node_decremental = "<bs>",
-	--  },
-	--}
-	----------------------------------------------------------------------
-	-- GIT
-	----------------------------------------------------------------------
-	{
-		"lewis6991/gitsigns.nvim",
-		config = true,
-	},
-	{
-		"kdheepak/lazygit.nvim",
-		lazy = true,
-		cmd = {
-			"LazyGit",
-			"LazyGitConfig",
-			"LazyGitCurrentFile",
-			"LazyGitFilter",
-			"LazyGitFilterCurrentFile",
-		},
-		-- optional for floating window border decoration
-		dependencies = {
-			"nvim-lua/plenary.nvim",
-		},
-		-- setting the keybinding for LazyGit with 'keys' is recommended in
-		-- order to load the plugin when the command is run for the first time
-		keys = {
-			{ "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
-		},
-	},
-})
-
--- =========================
--- LSP server config
--- =========================
-vim.lsp.config("lua_ls", {
-	settings = {
-		Lua = {
-			runtime = { version = "LuaJIT" },
-			diagnostics = { globals = { "vim", "require" } },
-			workspace = {
-				library = vim.api.nvim_get_runtime_file("", true),
+	require("blink.cmp").setup({
+		-- without this blink uses its own snippet engine and the friendly-snippets
+		-- loaded into LuaSnip above never surface in the menu
+		snippets = { preset = "luasnip" },
+		signature = { enabled = true },
+		completion = {
+			documentation = {
+				auto_show = true,
+				auto_show_delay_ms = 500,
 			},
-			telemetry = { enable = false },
+			menu = {
+				auto_show = true,
+				draw = {
+					treesitter = { "lsp" },
+					columns = {
+						{ "kind_icon", "label", "label_description", gap = 1 },
+						{ "kind" },
+					},
+				},
+			},
 		},
-	},
-})
+	})
+
+	local neocodeium = require("neocodeium")
+	neocodeium.setup()
+	vim.keymap.set("i", "<A-f>", neocodeium.accept, { desc = "Accept neocodeium suggestion" })
+end
+
+----------------------------------------------------------------------
+-- TREESITTER
+----------------------------------------------------------------------
+do
+	-- The `main` branch generates each parser with the tree-sitter CLI and then
+	-- compiles it with `cc` — both come from the system closure (tree-sitter in
+	-- modules/nixos/packages.nix, gcc in modules/nixos/dev.nix), NOT from npm.
+	vim.pack.add({ { src = gh("nvim-treesitter/nvim-treesitter"), version = "main" } })
+
+	local parsers = {
+		"bash",
+		"c",
+		"diff",
+		"html",
+		"lua",
+		"luadoc",
+		"markdown",
+		"markdown_inline",
+		"query",
+		"vim",
+		"vimdoc",
+		"typescript",
+		"javascript",
+		"css",
+		"elixir",
+		"json",
+		"rust",
+		"toml",
+		"yaml",
+		"tsx",
+	}
+	require("nvim-treesitter").install(parsers)
+
+	---@param buf integer
+	---@param language string
+	local function try_attach(buf, language)
+		if not vim.treesitter.language.add(language) then
+			return
+		end
+		-- syntax highlighting and other treesitter features
+		vim.treesitter.start(buf, language)
+
+		-- treesitter based folds — see `:help folds`
+		-- vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+		-- vim.wo.foldmethod = 'expr'
+
+		-- only override indentexpr when the language actually ships an indent
+		-- query, otherwise Vim's built-in indenting is the better fallback
+		if vim.treesitter.query.get(language, "indents") ~= nil then
+			vim.bo[buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+		end
+	end
+
+	local available = require("nvim-treesitter").get_available()
+	vim.api.nvim_create_autocmd("FileType", {
+		callback = function(args)
+			local buf, filetype = args.buf, args.match
+
+			local language = vim.treesitter.language.get_lang(filetype)
+			if not language then
+				return
+			end
+
+			local installed = require("nvim-treesitter").get_installed("parsers")
+			if vim.tbl_contains(installed, language) then
+				try_attach(buf, language)
+			elseif vim.tbl_contains(available, language) then
+				-- not installed yet but upstream has it — fetch, then attach
+				require("nvim-treesitter").install(language):await(function()
+					try_attach(buf, language)
+				end)
+			else
+				-- parser may exist outside nvim-treesitter (e.g. shipped with Nvim)
+				try_attach(buf, language)
+			end
+		end,
+	})
+end
+
+----------------------------------------------------------------------
+-- GIT
+----------------------------------------------------------------------
+do
+	vim.pack.add({
+		gh("lewis6991/gitsigns.nvim"),
+		gh("kdheepak/lazygit.nvim"), -- plenary added in the UI section above
+	})
+
+	require("gitsigns").setup({})
+	-- lazygit.nvim only defines :LazyGit commands; the keymap was previously
+	-- declared through lazy.nvim's `keys` spec, so it has to live here now
+	vim.keymap.set("n", "<leader>lg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
+end
