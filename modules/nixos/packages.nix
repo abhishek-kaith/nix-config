@@ -18,6 +18,10 @@
 
     # ── editors ───────────────────────────────────────────────────
     neovim vim
+    tree-sitter             # nvim-treesitter's `main` branch shells out to this CLI
+                            # to fetch + generate each parser (it explicitly refuses
+                            # the npm build). Needs >= 0.26.1; a C compiler comes
+                            # from `gcc` in dev.nix.
 
     # ── files & search ────────────────────────────────────────────
     ripgrep fd fzf bat eza zoxide tree

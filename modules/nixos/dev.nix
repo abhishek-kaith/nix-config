@@ -3,8 +3,14 @@
   imports = [ inputs.nix-index-database.nixosModules.default ];
 
   # Developer environment: the FHS/dynamic-linker shim, containers, Android tools,
-  # a scraper-ready Chromium, and nix ergonomics. Language toolchains (node/python/
-  # go/…) belong in per-project devShells via direnv — NOT here.
+  # a scraper-ready Chromium, AI coding agents, and nix ergonomics.
+  #
+  # The dividing line is "do I build WITH this, or are my tools built ON it?"
+  # Project toolchains (a pinned node, a go/rust/java version, project deps) go in
+  # per-project devShells via direnv — NOT here. What lives here is what nvim and
+  # the agents need in order to start working at all, plus the global agent
+  # binaries themselves. For genuine one-offs, reach for `,` (see nix ergonomics
+  # below) instead of adding a package.
 
   # ── nix-ld: run prebuilt, dynamically-linked binaries on NixOS ────
   # Without this, non-Nix binaries fail with "No such file or directory" even
@@ -32,6 +38,25 @@
     chromium              # scraper/automation browser (env below points tools at it)
     android-tools scrcpy  # adb + fastboot; scrcpy mirrors/controls a USB-connected phone
     docker-compose lazydocker dive   # container helpers
+
+    # ── AI coding agents ───────────────────────────────────────────
+    # Each authenticates itself on first run and keeps its own state in $HOME
+    # (~/.claude, ~/.codex, ~/.config/pi) — nothing to configure here. None of them
+    # self-update: the store is read-only, so nixpkgs wraps them with the updater
+    # and version-nag checks off. They move with `nix flake update` like the rest.
+    claude-code      # `claude` — Anthropic (unfree; allowUnfree is set in base.nix)
+    codex            # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
+    pi-coding-agent  # `pi`     — model-agnostic, MIT; wrapper bundles fd + ripgrep
+
+    # ── runtimes nvim + the agents are built on ────────────────────
+    # Not project toolchains — these are what the editor and the agents shell out
+    # to at runtime, so they can't live in a devShell (nvim and the agents start
+    # outside any project dir). Pin real versions per project in a devShell; these
+    # are only ever the fallback.
+    nodejs   # mason installs ts_ls/tailwindcss via npm; agents run MCP servers via npx
+    gcc      # `cc` — nvim-treesitter compiles each parser from source; also node-gyp
+    uv       # python without a system python: `uv run x.py`, `uvx ruff` — brings
+             # its own interpreters (they're prebuilt, hence the nix-ld above)
   ];
 
   # ── environment ──────────────────────────────────────────────────
