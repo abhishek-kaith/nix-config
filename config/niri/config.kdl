@@ -38,20 +38,35 @@ prefer-no-csd
 
 screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
+// niri pops the "Important Hotkeys" overlay on every startup. Skip it — Mod+/
+// opens the same overlay on demand (see binds).
+hotkey-overlay {
+    skip-at-startup
+}
+
 // noctalia (the shell) starts here and manages the wallpaper itself —
 // point it at config/wallpapers/ from noctalia's settings. No swaybg.
 spawn-at-startup "noctalia"
-
-// hide the top bar on startup (Mod+B toggles it); the sleep lets noctalia come up
-spawn-at-startup "sh" "-c" "sleep 2 && noctalia msg bar-hide"
 
 // niri's launcher activation works better for noctalia with this set (noctalia v5 docs).
 debug {
     honor-xdg-activation-with-invalid-serial
 }
 
+// Lid close → lock, THEN suspend. Without this the session suspends unlocked and
+// re-opening the lid lands straight on the desktop. Requires logind to keep its
+// hands off the lid (services.logind.lidSwitch = "ignore" in modules/nixos/laptop.nix),
+// otherwise both handlers race. Harmless on the VMs — they have no lid switch.
+switch-events {
+    lid-close { spawn "noctalia" "msg" "session" "lock-and-suspend"; }
+}
+
 binds {
     // apps / session
+    // Mod+/ shows this overlay. Every bind below carries a hotkey-overlay-title,
+    // because otherwise the overlay lists the raw `spawn "noctalia" "msg" …`
+    // command line instead of what the key actually does.
+    Mod+Slash       { show-hotkey-overlay; }
     Mod+Shift+Slash { show-hotkey-overlay; }
     Mod+Return hotkey-overlay-title="Open a Terminal: alacritty" { spawn "alacritty"; }
     Mod+O repeat=false { toggle-overview; }
@@ -77,12 +92,20 @@ binds {
     Mod+Shift+V { switch-focus-between-floating-and-tiling; }
 
     // noctalia shell (v5 IPC: `noctalia msg <command>`)
-    Mod+Space     { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
-    Mod+S         { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
-    Mod+C         { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
-    Mod+W         { spawn "noctalia" "msg" "panel-toggle" "wallpaper"; }
-    Mod+B         { spawn "noctalia" "msg" "bar-toggle"; }
-    Mod+BackSpace { spawn "noctalia" "msg" "session" "lock"; }
+    Mod+Space     hotkey-overlay-title="Launcher"          { spawn "noctalia" "msg" "panel-toggle" "launcher"; }
+    Mod+S         hotkey-overlay-title="Control Center"    { spawn "noctalia" "msg" "panel-toggle" "control-center"; }
+    Mod+C         hotkey-overlay-title="Clipboard History" { spawn "noctalia" "msg" "panel-toggle" "clipboard"; }
+    Mod+W         hotkey-overlay-title="Wallpaper Picker"  { spawn "noctalia" "msg" "panel-toggle" "wallpaper"; }
+    Mod+B         hotkey-overlay-title="Toggle the Bar"    { spawn "noctalia" "msg" "bar-toggle"; }
+    Mod+I         hotkey-overlay-title="Noctalia Settings" { spawn "noctalia" "msg" "settings-toggle"; }
+    Mod+BackSpace hotkey-overlay-title="Lock the Session"  { spawn "noctalia" "msg" "session" "lock"; }
+
+    // light ⇄ dark. [theme] mode = "auto" follows sunrise/sunset for the location
+    // in noctalia's config; this flips it by hand when auto guesses wrong.
+    Mod+Shift+T hotkey-overlay-title="Toggle Light/Dark Theme" { spawn "noctalia" "msg" "theme-mode-toggle"; }
+
+    // alt-tab through windows via noctalia's switcher (niri has no built-in one)
+    Alt+Tab hotkey-overlay-title="Switch Windows" { spawn "noctalia" "msg" "window-switcher"; }
 
     // focus — vim keys + arrows (H/L = columns, J/K = windows in a column)
     Mod+H { focus-column-left; }
@@ -151,11 +174,37 @@ binds {
     XF86AudioPrev  { spawn "noctalia" "msg" "media" "previous"; }
 }
 
+// ── window rules ─────────────────────────────────────────────────
+// Rules apply in order and later ones win, so the baseline goes first.
+// To find the app-id of anything not covered here: `niri msg windows`.
+
 // rounded corners for all windows; clip-to-geometry is also needed for the blur
 // below to follow the rounded shape.
 window-rule {
     geometry-corner-radius 3
     clip-to-geometry true
+}
+
+// Float the windows that are strictly worse tiled. niri has no notion of a
+// "dialog", so each of these has to be named explicitly — a file chooser or a
+// volume mixer taking a full column is the usual papercut.
+window-rule {
+    match app-id=r#"^xdg-desktop-portal-gtk$"#        // the GTK file picker (Save As / Open)
+    match app-id=r#"^org\.pulseaudio\.pavucontrol$"#  // volume mixer
+    match app-id=r#"^com\.gabm\.satty$"#              // screenshot annotator
+    match app-id=r#"^xarchiver$"#                     // archive extract/create prompts
+    match app-id=r#"^thunar$"# title=r#"(Progress|Confirm|Rename|Properties)"#
+    open-floating true
+}
+
+// Privacy: keep the password manager out of screen shares. "screencast" covers
+// the xdg-desktop-portal path — i.e. what a browser, Zoom or OBS gets — while
+// still letting you deliberately screenshot it yourself. Swap to "screen-capture"
+// to also black it out of grim/satty grabs. Note niri cannot block third-party
+// screenshot tools that read the framebuffer another way.
+window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    block-out-from "screencast"
 }
 
 // alacritty is translucent but does not request blur via the protocol —
@@ -169,8 +218,10 @@ window-rule {
 
 // float the noctalia settings window at a sensible size (noctalia v5 niri docs),
 // with a blurred backdrop (only visible if the window itself is translucent).
+// Prefix match, no $: the docs say `dev.noctalia.Noctalia` and the running window
+// reports `dev.noctalia.Noctalia.Settings` — this covers both.
 window-rule {
-    match app-id="dev.noctalia.Noctalia.Settings"
+    match app-id=r#"^dev\.noctalia\.Noctalia"#
     open-floating true
     default-column-width { fixed 1080; }
     default-window-height { fixed 920; }
@@ -179,13 +230,23 @@ window-rule {
     }
 }
 
-// Blur behind noctalia's floating popup panels (launcher, control-center, …).
-// They share the "noctalia-panel" layer namespace (source: panel_manager.cpp);
-// this is niri's equivalent of the fuzzel `^launcher$` example. Blur shows only
-// where the panel background is translucent (set that in noctalia's settings).
+// ── layer rules ──────────────────────────────────────────────────
+// Blur behind noctalia's own surfaces. The namespace list is from noctalia's niri
+// docs — the previous `^noctalia-panel$` only matched the popup panels, so the
+// bar, notifications, dock and OSD kept a flat background while the launcher was
+// blurred. Blur only shows where the surface is translucent, which is noctalia's
+// [shell.panel] transparency_mode / [bar.*] background_opacity.
 layer-rule {
-    match namespace="^noctalia-panel$"
+    match namespace=r#"^noctalia-(bar-[^"]+|notification|dock|panel|attached-panel|osd)$"#
     background-effect {
         blur true
     }
+}
+
+// Put the wallpaper *inside* niri's overview backdrop, so zooming out shows the
+// wallpaper rather than a flat colour. noctalia owns the wallpaper layer, so this
+// is the "blurred" variant from its docs.
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
 }
