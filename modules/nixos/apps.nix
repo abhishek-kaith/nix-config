@@ -7,7 +7,9 @@
   # ── file manager: Thunar + archives + thumbnails ─────────────────
   programs.thunar = {
     enable  = true;
-    plugins = with pkgs.xfce; [
+    # top-level, NOT pkgs.xfce.* — nixpkgs moved these out of the xfce set and the
+    # aliases now warn on every eval ("was moved to top-level").
+    plugins = with pkgs; [
       thunar-archive-plugin   # right-click → create / extract archive (uses xarchiver)
       thunar-volman           # auto-manage removable media
     ];
