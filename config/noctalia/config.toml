@@ -64,13 +64,13 @@ niri_overview_type_to_launch_enabled = true
 
     [shell.panel]
     control_center_placement = "floating"
-    # translucent panels — this is what gives the niri blur layer-rule something to
-    # blur. With transparency_mode = "solid" the blur rule is a no-op.
+    # translucent panels. The niri layer-rule that used to blur behind them is gone
+    # (it broke the session), so this is plain alpha over the wallpaper now.
     transparency_mode = "soft"
 
 # ── bar ──────────────────────────────────────────────────────────────────────
 [bar.default]
-background_opacity   = 0.0   # fully transparent; niri's layer-rule blurs behind it
+background_opacity   = 0.7   # mostly opaque; there is no blur behind it any more
 concave_edge_corners = false
 margin_ends          = 0
 radius               = 0

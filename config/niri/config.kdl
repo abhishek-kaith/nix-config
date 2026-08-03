@@ -24,8 +24,8 @@ layout {
 }
 
 // Global blur tuning (niri defaults). Per-surface blur is *requested* by the
-// window-rule / layer-rule background-effect blocks below; this only sets how it
-// looks. Uncomment `off` to disable blur everywhere.
+// window-rule background-effect blocks below; this only sets how it looks.
+// Uncomment `off` to disable blur everywhere.
 blur {
     // off
     passes 3
@@ -228,25 +228,4 @@ window-rule {
     background-effect {
         blur true
     }
-}
-
-// ── layer rules ──────────────────────────────────────────────────
-// Blur behind noctalia's own surfaces. The namespace list is from noctalia's niri
-// docs — the previous `^noctalia-panel$` only matched the popup panels, so the
-// bar, notifications, dock and OSD kept a flat background while the launcher was
-// blurred. Blur only shows where the surface is translucent, which is noctalia's
-// [shell.panel] transparency_mode / [bar.*] background_opacity.
-layer-rule {
-    match namespace=r#"^noctalia-(bar-[^"]+|notification|dock|panel|attached-panel|osd)$"#
-    background-effect {
-        blur true
-    }
-}
-
-// Put the wallpaper *inside* niri's overview backdrop, so zooming out shows the
-// wallpaper rather than a flat colour. noctalia owns the wallpaper layer, so this
-// is the "blurred" variant from its docs.
-layer-rule {
-    match namespace="^noctalia-backdrop"
-    place-within-backdrop true
 }
