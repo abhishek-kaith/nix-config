@@ -11,12 +11,6 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    noctalia.url = "github:noctalia-dev/noctalia/cachix";
-    # Track the `cachix` branch (not `main`) so prebuilt binaries are guaranteed to be
-    # in noctalia's cache — avoids compiling the Qt/QML shell from source on rebuilds.
-    # Intentionally NOT following nixpkgs — the cache is built with noctalia's own
-    # nixpkgs; overriding it causes a hash mismatch and forces a full source compile.
-
     # hardware-specific tuning profiles (e.g. ThinkPad T480)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
@@ -61,9 +55,7 @@
           mkdir -p /mnt/tmp
           # --no-root-passwd: skip the interactive root-password prompt; the
           # autologin user sets its own password on first boot (see README)
-          TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt --no-root-passwd \
-            --option extra-substituters https://noctalia.cachix.org \
-            --option extra-trusted-public-keys noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+          TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt --no-root-passwd
 
           # Seed this repo into the new system so the editable configs resolve on
           # first boot. Everything hangs off repoDir (/home/<user>/nix-config):
