@@ -1,9 +1,7 @@
 # starship prompt — live-editable config, symlinked to ~/.config/starship.toml.
 # The NixOS starship module (modules/nixos/shell.nix) only forces its own config
 # when ~/.config/starship.toml is ABSENT, so with this file present starship reads
-# it directly. noctalia themes the prompt by inserting `palette = "noctalia"` and a
-# marker-delimited `[palettes.noctalia]` block; that stays out of the way of the
-# settings below.
+# it directly — edit this file and the next prompt picks it up, no rebuild.
 
 add_newline = false
 

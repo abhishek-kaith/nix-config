@@ -30,3 +30,40 @@ action = "ToggleViMode"
 key = "Return"
 mods = "Shift"
 chars = ""
+
+# ── colours: tokyonight (night) ─────────────────────────────────────
+# Static on purpose. noctalia used to generate this from the wallpaper and write
+# it to a separate imported file; without it alacritty would fall back to its
+# built-in palette. Matched to the nvim colourscheme (config/nvim) so the editor
+# and the terminal around it agree.
+[colors.primary]
+background = "#1a1b26"
+foreground = "#c0caf5"
+
+[colors.cursor]
+text   = "#1a1b26"
+cursor = "#c0caf5"
+
+[colors.selection]
+background = "#283457"
+text       = "CellForeground"
+
+[colors.normal]
+black   = "#15161e"
+red     = "#f7768e"
+green   = "#9ece6a"
+yellow  = "#e0af68"
+blue    = "#7aa2f7"
+magenta = "#bb9af7"
+cyan    = "#7dcfff"
+white   = "#a9b1d6"
+
+[colors.bright]
+black   = "#414868"
+red     = "#f7768e"
+green   = "#9ece6a"
+yellow  = "#e0af68"
+blue    = "#7aa2f7"
+magenta = "#bb9af7"
+cyan    = "#7dcfff"
+white   = "#c0caf5"

@@ -119,7 +119,7 @@ vim.api.nvim_create_autocmd("PackChanged", {
 do
 	vim.pack.add({ gh("folke/tokyonight.nvim") })
 	require("tokyonight").setup({
-		-- transparent so the terminal's own (noctalia-managed) backdrop shows
+		-- transparent so the terminal's own backdrop (and its opacity) shows
 		-- through. Use the theme's options rather than clearing Normal/NormalFloat
 		-- by hand: these propagate to every group tokyonight defines, so float
 		-- borders, popups and notifications stay consistent with the editor
