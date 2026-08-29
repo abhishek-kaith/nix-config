@@ -24,15 +24,19 @@ modules/nixos/            # SYSTEM layer — imported by hosts/<h>/default.nix
   packages.nix            #   system-wide CLI toolbox (network/dev/archive/nix tools)
   network.nix             #   NetworkManager, DNS (Quad9 + Cloudflare, DoT), firewall
   shell.nix               #   zsh, fzf, zoxide, starship (package + shell init)
+  dev.nix                 #   nix-ld, podman, android tools, AI agents, `,` + nix-index
   desktop.nix             #   DE-agnostic floor: audio, fonts, polkit, gnome-keyring
   cosmic.nix              #   THE desktop environment: COSMIC (from unstable) + greeter
   apps.nix                #   GUI apps COSMIC doesn't ship (mpv, qimgv, keepassxc, …)
+  syncthing.nix           #   file sync, GUI on localhost:8384
 
 modules/home/             # USER layer — imported by hosts/<h>/home.nix
   git / zsh / tmux / scripts   #   shell + dotfile wiring
   xdg.nix                 #   XDG user dirs + mime defaults
   direnv.nix              #   direnv + nix-direnv
   firefox.nix             #   hardened firefox + forced extensions
+  neovim.nix              #   editable nvim config (out-of-store)
+  easyeffects.nix         #   mic denoise/AGC chain (t480 only)
   alacritty.nix / starship.nix #   terminal + prompt (live-editable configs)
 
 hosts/<h>/                # PER-HOST — only what differs between machines
