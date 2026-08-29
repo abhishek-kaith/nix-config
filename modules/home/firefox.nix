@@ -33,16 +33,6 @@
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/keepassxc-browser/latest.xpi";
           installation_mode = "force_installed";
         };
-        # Pywalfox applies noctalia's palette (and its light/dark flips) to the
-        # Firefox chrome. It talks to noctalia over native messaging — noctalia
-        # writes ~/.cache/wal/colors.json plus the messaging manifest when the
-        # "pywalfox-beta4" community template is enabled (config/noctalia/config.toml).
-        # Both halves are required: template without extension does nothing, and
-        # extension without template has no palette to read.
-        "pywalfox@frewacom.org" = {
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/pywalfox/latest.xpi";
-          installation_mode = "force_installed";
-        };
       };
 
       # KeePassXC is the password store — leaving Firefox's own manager on means
@@ -70,10 +60,6 @@
         "browser.urlbar.suggest.quicksuggest.sponsored" = false;
         "browser.urlbar.suggest.quicksuggest.nonsponsored" = false;
         "browser.discovery.enabled" = false;   # "personalised extension recommendations"
-
-        # let Pywalfox drive the chrome colours instead of Firefox picking a theme
-        # from the system; without this the toolbar can fight the applied palette
-        "extensions.activeThemeID" = "default-theme@mozilla.org";
       };
     };
   };

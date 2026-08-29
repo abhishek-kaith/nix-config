@@ -9,11 +9,8 @@
     ../../modules/home/direnv.nix     # direnv + nix-direnv
     ../../modules/home/neovim.nix     # editable nvim config (out-of-store)
     ../../modules/home/firefox.nix    # hardened firefox + uBlock + keepassxc
-    ../../modules/home/theme.nix      # gtk/qt theme + icons + cursor (noctalia colours)
-    ../../modules/home/niri.nix       # kdl config (out-of-store), TTY1 exec
-    ../../modules/home/noctalia.nix   # noctalia shell
-    ../../modules/home/alacritty.nix  # terminal
-    ../../modules/home/starship.nix   # prompt config (out-of-store, noctalia-themeable)
+    ../../modules/home/alacritty.nix  # terminal (out-of-store config + colours)
+    ../../modules/home/starship.nix   # prompt config (out-of-store)
   ];
 
   home.username      = user;
