@@ -24,17 +24,16 @@ modules/nixos/            # SYSTEM layer — imported by hosts/<h>/default.nix
   packages.nix            #   system-wide CLI toolbox (network/dev/archive/nix tools)
   network.nix             #   NetworkManager, DNS (Quad9 + Cloudflare, DoT), firewall
   shell.nix               #   zsh, fzf, zoxide, starship (package + shell init)
-  desktop.nix             #   audio, fonts, polkit, xdg-portals, gnome-keyring
-  niri.nix                #   niri compositor + session entry (TTY1 autologin)
-  noctalia.nix            #   noctalia overlay + binary cache + runtime deps
-  laptop.nix              #   upower, bluetooth, power-profiles (physical hosts only)
+  desktop.nix             #   DE-agnostic floor: audio, fonts, polkit, gnome-keyring
+  cosmic.nix              #   THE desktop environment: COSMIC (from unstable) + greeter
+  apps.nix                #   GUI apps COSMIC doesn't ship (mpv, qimgv, keepassxc, …)
 
 modules/home/             # USER layer — imported by hosts/<h>/home.nix
   git / zsh / tmux / scripts   #   shell + dotfile wiring
   xdg.nix                 #   XDG user dirs + mime defaults
   direnv.nix              #   direnv + nix-direnv
-  niri.nix / noctalia.nix #   niri kdl config + noctalia shell (home side)
-  alacritty.nix / starship.nix #   terminal + prompt (noctalia-themeable)
+  firefox.nix             #   hardened firefox + forced extensions
+  alacritty.nix / starship.nix #   terminal + prompt (live-editable configs)
 
 hosts/<h>/                # PER-HOST — only what differs between machines
   default.nix             #   hostname, bootloader, users, ssh, quirks + module imports
@@ -44,8 +43,13 @@ hosts/<h>/                # PER-HOST — only what differs between machines
 ```
 
 **Where does X go?** Anything hardware- or machine-specific (GPU tools, microcode,
-disk layout, guest additions, `hostName`) → `hosts/<h>/`. Anything shared → the
-matching `modules/nixos/*` or `modules/home/*` by concern.
+disk layout, guest additions, VM display quirks, `hostName`) → `hosts/<h>/`.
+Anything shared → the matching `modules/nixos/*` or `modules/home/*` by concern.
+
+The desktop environment is deliberately **one file, imported once per graphical
+host**: `modules/nixos/cosmic.nix`. Nothing else in the repo names COSMIC. To try
+a different DE later, write `modules/nixos/<de>.nix` alongside it and change one
+import line per host — `desktop.nix` (audio/fonts/keyring) and `apps.nix` stay put.
 
 ---
 
@@ -68,7 +72,7 @@ nix --extra-experimental-features 'nix-command flakes' run .#install -- t480
 ```
 This **erases the target disk**, then: partitions + mounts via disko → runs
 `nixos-install` (with `TMPDIR=/mnt/tmp` so the RAM-backed ISO `/tmp` doesn't
-overflow, and the noctalia cache enabled) → **seeds this repo to `~/nix-config`**
+overflow) → **seeds this repo to `~/nix-config`**
 on the new system so the editable configs resolve on first boot. disko will
 prompt for the LUKS passphrase during partitioning.
 
@@ -76,9 +80,7 @@ prompt for the LUKS passphrase during partitioning.
 
 ```sh
 disko --mode destroy,format,mount --flake .#t480      # partition + mount to /mnt
-nixos-install --flake .#t480 --root /mnt --no-root-passwd \
-  --option extra-substituters https://noctalia.cachix.org \
-  --option extra-trusted-public-keys noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+nixos-install --flake .#t480 --root /mnt --no-root-passwd
 # then copy this repo to /mnt/home/<user>/nix-config yourself
 ```
 There is **no separate home-manager step** — home-manager runs as a NixOS module
@@ -92,21 +94,34 @@ config too.
 
 ---
 
-## Binary cache (noctalia)
+## Desktop environment (COSMIC)
 
-noctalia is a Qt/QML shell that is slow to compile, so we pull it prebuilt. The
-cache has to be configured in **two places for two different moments**:
+`modules/nixos/cosmic.nix` is the whole desktop layer. Three things in it are
+worth knowing:
 
-| Where | Whose Nix builds | Covers |
-|---|---|---|
-| `--option extra-substituters …` in `nix run .#install` | the **live ISO** | the one-time install build (system config isn't on disk yet) |
-| `nix.settings` in `modules/nixos/noctalia.nix` | the **installed machine** | every later `nixos-rebuild` |
+**Packages come from `nixpkgs-unstable`, the module from stable.** nixos-26.05
+ships COSMIC epoch 1.2; unstable is on 1.5. The file overlays the COSMIC packages
+(comp, panel, settings, greeter, portal, …) with their unstable versions while the
+stable NixOS module keeps doing the session wiring — the same trick the old niri
+config used for `pkgs-unstable.niri`. The overlay is an **explicit attr table, not
+a `cosmic-*` glob**, so an upstream rename (1.5 renamed `cosmic-applibrary` →
+`cosmic-app-library`) fails the build loudly instead of quietly leaving one
+package behind at 1.2. If `nix flake update` ever errors with a missing
+`cosmic-…` attribute, that is this table asking to be updated — nothing is broken.
 
-Both use the same URL + key; keep them in sync. The flake also tracks noctalia's
-**`cachix` branch** (not `main`) so the commit you build is guaranteed to be in
-the cache — otherwise a rebuild can miss it and compile from source.
+**Login is passwordless.** `cosmic-greeter` runs on greetd, and
+`services.displayManager.autoLogin` makes greetd start the session directly at
+boot; the greeter itself is then only the lock screen and the post-logout login.
+Consequence: the gnome-keyring is **not** unlocked at boot (there is no password
+to unlock it with). KeePassXC is the real password store, so this only affects
+Firefox's fallback Secret Service use.
 
-**Adding another cache in future:** get the `cachix use <name>` URL + public key
+**COSMIC owns theming, keybinds and the wallpaper** — all of it lives in
+COSMIC Settings, not in this repo. There is no dotfile to edit and nothing
+generates colour palettes at runtime any more; the terminal's palette is a static
+block in `config/alacritty/alacritty.toml`.
+
+**Adding a binary cache in future:** get the `cachix use <name>` URL + public key
 from its page on `cachix.org`, then add them to a module's `nix.settings`
 (`extra-substituters` + `extra-trusted-public-keys`). Once it's in the system
 config, rebuilds use it automatically — no per-command flags.
@@ -122,7 +137,6 @@ on an already-running host).
 
 | Config | How it's wired | Reload |
 |---|---|---|
-| niri | `mkOutOfStoreSymlink` → `~/.config/niri/config.kdl` | instant (niri watches) |
 | alacritty | `settings.general.import` of the repo TOML | instant (`live_config_reload`) |
 | starship | `mkOutOfStoreSymlink` → `~/.config/starship.toml` | new prompt |
 | tmux | `source-file` the repo conf | `prefix + R` |
@@ -130,9 +144,9 @@ on an already-running host).
 | zsh | managed `.zshrc` sources `config/zsh/rc.zsh` | new shell |
 | scripts | `mkOutOfStoreSymlink` → `~/.scripts/` | live |
 
-noctalia themes alacritty / starship / niri by writing **separate** theme files
-these configs import/include — it never edits a nix-managed symlink. `home-manager.backupFileExtension = "hm-bak"` is the safety net for the one case it
-still can.
+`home-manager.backupFileExtension = "hm-bak"` is the safety net for when
+something outside nix writes to a file home-manager manages: the rebuild moves
+the stray file aside instead of aborting with "file would be clobbered".
 
 ---
 
@@ -149,8 +163,8 @@ nvd diff /run/current-system result
 sudo nixos-rebuild --rollback
 
 # update inputs (stay current within 26.05, or bump the input URLs for 26.11)
-nix flake update              # everything
-nix flake update noctalia     # one input
+nix flake update                    # everything
+nix flake update nixpkgs-unstable   # one input (this is where COSMIC comes from)
 
 # quick checks
 nix flake check               # evaluate + typecheck all hosts
@@ -192,13 +206,10 @@ The rest (rebase-on-pull, autostash, prune, zdiff3, histogram, …) is in
 **Syncthing** — web UI at http://127.0.0.1:8384 (localhost only). Add folders /
 pair devices there; nix won't overwrite them.
 
-**Keybinds (niri + noctalia)** — `Mod+B` toggle top bar (hidden on login),
-`Mod+C` clipboard, `Mod+W` wallpaper picker, `Mod+Space` launcher,
-`Print`/`Shift+Print` region/full screenshot → satty.
+**Keybinds, theming, wallpaper, displays** — COSMIC Settings, not this repo.
+Keyboard shortcuts are per-user state under `~/.config/cosmic/`; nix does not
+manage them, so they survive rebuilds and are not version-controlled.
 
 **Firefox** — default browser, hardened (no telemetry, strict tracking protection,
 HTTPS-only) with uBlock Origin + KeePassXC-Browser force-installed. Enable
 "Browser Integration" in KeePassXC's settings to complete the KeePassXC link.
-
-**noctalia config** — editable base at `config/noctalia/config.toml` (t480); the
-app merges its runtime state (`~/.local/state/noctalia/settings.toml`) on top.
