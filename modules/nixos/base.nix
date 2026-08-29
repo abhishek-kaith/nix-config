@@ -25,7 +25,6 @@
       experimental-features = [ "nix-command" "flakes" ];
       auto-optimise-store   = true;
       trusted-users         = [ "root" user ];
-      # noctalia's binary cache lives in modules/nixos/noctalia.nix, not here.
     };
     gc = {
       automatic = true;

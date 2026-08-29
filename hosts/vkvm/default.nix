@@ -12,8 +12,7 @@
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
     ../../modules/nixos/apps.nix      # GUI apps: mpv, thunar, qimgv, satty, pdf
-    ../../modules/nixos/niri.nix      # compositor + session entry (autologin)
-    ../../modules/nixos/noctalia.nix  # noctalia overlay + binary cache + runtime deps
+    ../../modules/nixos/cosmic.nix    # the desktop environment (COSMIC, from unstable)
     ../../modules/nixos/syncthing.nix # file sync (opens 22000/tcp + 21027/udp)
   ];
 
@@ -25,8 +24,11 @@
     efi.canTouchEfiVariables = true;
   };
 
-  # software cursors — required under QEMU; real hardware uses HW cursors
-  environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
+  # NOTE: no WLR_NO_HARDWARE_CURSORS here. That is a wlroots variable and
+  # cosmic-comp is Smithay-based, so setting it does nothing. If the pointer is
+  # missing or the session won't start under QEMU, fix it on the host side
+  # instead: `-vga virtio` / virtio-gpu-gl with `-display gtk,gl=on` (COSMIC
+  # needs a working GL stack, it has no software-only fallback worth using).
 
   users.users.${user} = {
     isNormalUser = true;

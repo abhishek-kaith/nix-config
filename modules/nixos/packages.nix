@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   # System-wide CLI toolbox, shared by every host (incl. the dev VMs).
-  # Grouped by purpose; graphical/Wayland tools live in desktop.nix / noctalia.nix.
+  # Grouped by purpose; GUI apps live in apps.nix, the desktop itself in cosmic.nix.
   environment.systemPackages = with pkgs; [
     # ── system basics (identify hardware, poke at processes) ──────
     pciutils usbutils      # lspci / lsusb
@@ -27,6 +27,10 @@
     ripgrep fd fzf bat eza zoxide tree
     sd                      # intuitive find-and-replace (sed alt)
     yazi                    # fast TUI file manager
+
+    # ── wayland / desktop CLI ─────────────────────────────────────
+    wl-clipboard            # wl-copy / wl-paste — piping to and from the clipboard
+    imagemagick             # convert/mogrify/identify for image work from the shell
 
     # ── archives ──────────────────────────────────────────────────
     unzip zip p7zip rsync

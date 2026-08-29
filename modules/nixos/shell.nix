@@ -27,6 +27,6 @@
   # the package + shell init; it deliberately sets no `settings`, because the NixOS
   # starship module only forces STARSHIP_CONFIG to its own generated file when
   # ~/.config/starship.toml is absent — and we want that user file to win so it can
-  # be edited live and themed by noctalia.
+  # be edited live (see modules/home/starship.nix).
   programs.starship.enable = true;
 }

@@ -13,10 +13,8 @@
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
     ../../modules/nixos/apps.nix      # GUI apps: mpv, thunar, qimgv, satty, pdf
-    ../../modules/nixos/niri.nix      # compositor + session entry (autologin)
-    ../../modules/nixos/noctalia.nix  # noctalia overlay + binary cache + runtime deps
+    ../../modules/nixos/cosmic.nix    # the desktop environment (COSMIC, from unstable)
     ../../modules/nixos/syncthing.nix # file sync (opens 22000/tcp + 21027/udp)
-    ../../modules/nixos/laptop.nix    # upower, bluetooth, power-profiles
   ];
 
   networking.hostName = "t480";  # networkmanager lives in modules/nixos/network.nix

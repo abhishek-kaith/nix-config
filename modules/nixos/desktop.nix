@@ -1,8 +1,9 @@
 { pkgs, ... }:
 {
-  # The compositor-agnostic graphical layer: audio, fonts, portals, keyring,
-  # polkit. The compositor itself (niri) + how the session starts is niri.nix;
-  # the noctalia shell's system bits are noctalia.nix.
+  # The DE-agnostic graphical floor: audio, fonts, keyring, polkit. Whatever
+  # desktop environment sits on top (currently modules/nixos/cosmic.nix) brings
+  # its own compositor, portals, session entry and theming — this file is what
+  # would stay identical if that were swapped out tomorrow.
 
   # ── audio (PipeWire) ─────────────────────────────────────────────
   services.pipewire = {
@@ -13,6 +14,8 @@
   services.pulseaudio.enable = false;
 
   # ── fonts ────────────────────────────────────────────────────────
+  # COSMIC adds its own (fira, open-sans, noto); these are ours — the Nerd Font
+  # glyphs the terminal / prompt / neovim config depend on.
   fonts.packages = with pkgs; [
     nerd-fonts.iosevka
     nerd-fonts.jetbrains-mono
@@ -27,21 +30,25 @@
   };
 
   # ── wayland session env ──────────────────────────────────────────
-  # Not niri-specific: any Wayland compositor wants Electron/Chromium apps running
+  # Not DE-specific: any Wayland compositor wants Electron/Chromium apps running
   # natively rather than through XWayland.
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   # ── auth / secret service ────────────────────────────────────────
+  # All three are also set by the COSMIC module (polkit/dconf outright, keyring
+  # as an mkDefault). Stated here anyway because they are the floor any graphical
+  # session needs, not a COSMIC detail — the keyring is what Firefox stores its
+  # credentials in, and PAM-unlocking it is wired in cosmic.nix with the greeter.
   security.polkit.enable = true;
-  programs.dconf.enable = true;                            # gsettings/dconf backend — GTK apps + noctalia's gsettings theme-set need it
-  services.gnome.gnome-keyring.enable = true;              # Secret Service (browser creds, etc.)
-  security.pam.services.login.enableGnomeKeyring = true;   # unlock keyring at the TTY autologin
+  programs.dconf.enable = true;                # gsettings/dconf backend for GTK apps
+  services.gnome.gnome-keyring.enable = true;  # Secret Service (browser creds, etc.)
 
   # ── xdg portals (file pickers + screencast under Wayland) ────────
-  # Not configured here, on purpose. Which portal backend serves screencast is a
-  # property of the compositor, not of "the desktop" — niri needs the GNOME one,
-  # a wlroots compositor needs xdg-desktop-portal-wlr — so the compositor's own
-  # NixOS module owns this. `programs.niri` (modules/nixos/niri.nix) already sets
-  # xdg.portal.enable, both backends, and config.niri; a second compositor brings
-  # its own. PipeWire above is the shared prerequisite screencast needs either way.
+  # Deliberately not configured here. Which portal backend can serve screencast
+  # is a property of the compositor, not of "the desktop" — COSMIC needs
+  # xdg-desktop-portal-cosmic, a wlroots compositor needs …-wlr — so the DE's own
+  # module owns it. `services.desktopManager.cosmic` already sets xdg.portal.enable,
+  # both backends (cosmic + gtk) and configPackages. Don't re-declare any of that
+  # here: a hand-written xdg.portal.config OVERRIDES upstream's rather than
+  # extending it. PipeWire above is the shared prerequisite either way.
 }
