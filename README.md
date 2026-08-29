@@ -139,7 +139,7 @@ on an already-running host).
 |---|---|---|
 | alacritty | `settings.general.import` of the repo TOML | instant (`live_config_reload`) |
 | starship | `mkOutOfStoreSymlink` → `~/.config/starship.toml` | new prompt |
-| tmux | `source-file` the repo conf | `prefix + R` |
+| tmux | `source-file` the repo conf | `prefix + r` |
 | git | `[include]` of the repo config | next `git` command |
 | zsh | managed `.zshrc` sources `config/zsh/rc.zsh` | new shell |
 | scripts | `mkOutOfStoreSymlink` → `~/.scripts/` | live |

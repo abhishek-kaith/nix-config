@@ -14,10 +14,13 @@ local fzf = function(fn)
     require("fzf-lua")[fn]()
   end
 end
+-- NOTE: <C-h/j/k/l> are claimed by window movement further down this file, and
+-- the later mapping wins. Pickers that would collide use <leader> + the same
+-- letter instead, so the muscle memory carries over.
 vim.keymap.set("n", "<C-\\>", fzf("buffers"), { desc = "Find buffers" })
-vim.keymap.set("n", "<C-k>", fzf("builtin"), { desc = "Find fzf-lua pickers" })
+vim.keymap.set("n", "<leader>k", fzf("builtin"), { desc = "Find fzf-lua pickers" })
 vim.keymap.set("n", "<C-p>", fzf("files"), { desc = "Find files" })
-vim.keymap.set("n", "<C-l>", fzf("live_grep"), { desc = "Live grep" })
+vim.keymap.set("n", "<leader>l", fzf("live_grep"), { desc = "Live grep" })
 vim.keymap.set("n", "<C-g>", fzf("grep_project"), { desc = "Grep project" })
 vim.keymap.set("n", "<F1>", fzf("help_tags"), { desc = "Find help tags" })
 
