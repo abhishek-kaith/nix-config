@@ -15,6 +15,8 @@
     ../../modules/nixos/apps.nix      # GUI apps: mpv, thunar, qimgv, satty, pdf
     ../../modules/nixos/cosmic.nix    # the desktop environment (COSMIC, from unstable)
     ../../modules/nixos/syncthing.nix # file sync (opens 22000/tcp + 21027/udp)
+    ../../modules/nixos/laptop.nix    # fwupd, lid->hibernate, battery thresholds
+    ../../modules/nixos/storage.nix   # btrfs scrub, smartd, snapper snapshots
   ];
 
   networking.hostName = "t480";  # networkmanager lives in modules/nixos/network.nix
@@ -34,11 +36,20 @@
 
   security.sudo.wheelNeedsPassword = true;
 
-  # SSH — optional on a laptop; disable PasswordAuthentication if exposed to untrusted networks
-  services.openssh = {
-    enable = true;
-    settings.PasswordAuthentication = true;
-  };
+  # ── no sshd ──────────────────────────────────────────────────────
+  # Deliberately absent, where the VMs do run one. This machine joins networks it
+  # does not control (cafe, hotel, conference wifi), and openFirewall puts :22 on
+  # every interface — so an sshd with PasswordAuthentication and a `wheel` account
+  # still on its bootstrap password is a guessable path to root from the same
+  # subnet. Nothing here connects *in*; outbound ssh needs no daemon.
+  #
+  # To turn it back on, do it key-only — never with the password path open:
+  #   users.users.${user}.openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAA..." ];
+  #   services.openssh = {
+  #     enable = true;
+  #     settings.PasswordAuthentication = false;
+  #     settings.KbdInteractiveAuthentication = false;
+  #   };
 
   system.stateVersion = "26.05";
 }
