@@ -1,7 +1,7 @@
 { lib, pkgs, pkgs-unstable, user, ... }:
 let
   # ── COSMIC packages from nixpkgs-unstable ────────────────────────
-  # nixos-26.05 ships COSMIC epoch 1.2; unstable is on 1.5. The NixOS *module*
+  # nixos-26.05 ships COSMIC epoch 1.2; unstable is on 1.6. The NixOS *module*
   # stays the stable one (it drives the whole session wiring), so we only swap
   # the PACKAGES underneath it with an overlay — the same trick the old niri.nix
   # used with `pkgs-unstable.niri`.
@@ -10,7 +10,7 @@ let
   # `cosmic-*`. Upstream renames things between epochs (1.5 renamed
   # `cosmic-applibrary` → `cosmic-app-library`), and with an explicit table a
   # rename fails eval LOUDLY here, instead of silently leaving that one package
-  # behind at 1.2 while every other piece of the session moved to 1.5 — which is
+  # behind at 1.2 while every other piece of the session moved on — which is
   # exactly the kind of skew that makes a compositor half-work.
   #
   #   left  = attribute the stable NixOS module asks for
@@ -66,10 +66,29 @@ in
   # (which the module DOES set, for cosmic-osd) has no theme to find.
   environment.systemPackages = [ pkgs-unstable.cosmic-sound-theme ];
 
-  # Not wanted: mpv is the video player (and the mime handler — modules/home/xdg.nix)
-  # and neovim is the editor. Neither is in the module's `corePkgs` list, so
-  # dropping them is a supported exclusion and doesn't destabilise the session.
-  environment.cosmic.excludePackages = with pkgs; [ cosmic-player cosmic-edit ];
+  # Both of these are in the module's optional list, not `corePkgs`, so excluding
+  # them is a supported operation and does not destabilise the session.
+  #
+  #   cosmic-player — mpv is the video player and the mime handler for video
+  #                   (modules/home/xdg.nix), so this is a second one.
+  #   cosmic-term   — alacritty is the terminal, configured and themed in this
+  #                   repo. Safe to drop only because modules/home/xdg.nix now
+  #                   sets x-scheme-handler/terminal: cosmic-files resolves
+  #                   "Open in Terminal" by asking xdg-mime for that handler and
+  #                   only falls back to com.system76.CosmicTerm when it is unset.
+  #                   It spawns the terminal with the folder as the working
+  #                   directory rather than as an argument, so alacritty — whose
+  #                   .desktop Exec takes no field codes — lands in the right place.
+  #
+  # cosmic-edit is deliberately NOT excluded, though neovim is the real editor:
+  # excluding it left the machine with no graphical text editor at all, so opening
+  # a .txt or .conf from cosmic-files had nothing to hand it to.
+  #
+  # networkmanagerapplet is also NOT excluded, though its tray icon is dead weight
+  # under COSMIC (cosmic-applets has its own network applet). The package is what
+  # ships `nm-connection-editor`, still the only GUI here able to set up a VPN or
+  # enterprise 802.1X wifi — COSMIC's own network page cannot.
+  environment.cosmic.excludePackages = with pkgs; [ cosmic-player cosmic-term ];
 
   # ── session entry: greeter + passwordless autologin ──────────────
   # Replaces the old getty-autologin + `exec niri` from .zprofile. cosmic-greeter
@@ -84,10 +103,15 @@ in
     };
   };
 
-  # Unlock the gnome-keyring (the Secret Service — Firefox creds) with the login
-  # password when logging in THROUGH the greeter. Note the boot path skips this
-  # by definition: passwordless autologin has no password to unlock it with, so
-  # the keyring stays locked until something first asks for it. That is fine
-  # here — KeePassXC is the actual password store; gnome-keyring is a fallback.
-  security.pam.services.greetd.enableGnomeKeyring = true;
+  # NOT set here: security.pam.services.greetd.enableGnomeKeyring. The greetd
+  # module already defaults it to services.gnome.gnome-keyring.enable, which the
+  # COSMIC module turns on — so writing it out changed nothing.
+  #
+  # What it means with autologin: the boot path has no password, so PAM cannot
+  # unlock the keyring and it comes up LOCKED (logging in through the greeter
+  # after a logout does unlock it). Locked is not broken — the first app to ask
+  # for a secret gets a gcr unlock/create dialog, and gcr is in the closure and
+  # D-Bus-activatable. In practice almost nothing here asks: chromium wants it for
+  # its cookie "safe storage" key and falls back to plaintext without it, and
+  # KeePassXC — the actual password store — does not use the Secret Service at all.
 }

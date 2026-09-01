@@ -26,16 +26,52 @@
       # handler now, but nothing sets it as the *default*, so state it.
       "inode/directory"  = "com.system76.CosmicFiles.desktop";
 
+      # Which terminal "Open in Terminal" uses. cosmic-files asks xdg-mime for
+      # this handler first and only falls back to com.system76.CosmicTerm when it
+      # is unset — which is why setting it is what makes excluding cosmic-term
+      # (modules/nixos/cosmic.nix) safe. It launches the terminal with the folder
+      # as the process working directory, not as an argument, so Alacritty.desktop
+      # taking no field codes in its Exec is fine.
+      "x-scheme-handler/terminal" = "Alacritty.desktop";
+
+      # Plain text. cosmic-edit is kept installed precisely so this has somewhere
+      # to go (see modules/nixos/cosmic.nix); without the mapping it depended on
+      # whichever app happened to register for text/plain first.
+      "text/plain"       = "com.system76.CosmicEdit.desktop";
+
       "image/png"        = "qimgv.desktop";
       "image/jpeg"       = "qimgv.desktop";
       "image/gif"        = "qimgv.desktop";
       "image/webp"       = "qimgv.desktop";
+      "image/tiff"       = "qimgv.desktop";
+      "image/bmp"        = "qimgv.desktop";
+      "image/avif"       = "qimgv.desktop";   # what modern cameras and the web emit
+      "image/heif"       = "qimgv.desktop";   # iPhone stills
+      # SVG is markup, not a raster: qimgv renders it poorly or not at all, and
+      # firefox is the best renderer already on the machine.
+      "image/svg+xml"    = "firefox.desktop";
+
       "video/mp4"        = "mpv.desktop";
       "video/x-matroska" = "mpv.desktop";
       "video/webm"       = "mpv.desktop";
-      # COSMIC also ships cosmic-reader; papers stays the default until that one
-      # proves itself (modules/nixos/apps.nix). Swap the id here if you drop papers.
-      "application/pdf"        = "org.gnome.Papers.desktop";
+      "video/quicktime"  = "mpv.desktop";     # .mov — phone video
+      "video/x-msvideo"  = "mpv.desktop";     # .avi
+      "video/mpeg"       = "mpv.desktop";
+
+      # Audio had NO mapping at all: with cosmic-player excluded in favour of mpv,
+      # double-clicking an .mp3 in cosmic-files had nothing registered to open it.
+      # mpv plays audio perfectly well (it draws no window for audio-only files).
+      "audio/mpeg"       = "mpv.desktop";     # .mp3
+      "audio/flac"       = "mpv.desktop";
+      "audio/x-wav"      = "mpv.desktop";
+      "audio/ogg"        = "mpv.desktop";
+      "audio/opus"       = "mpv.desktop";
+      "audio/mp4"        = "mpv.desktop";     # .m4a
+      "audio/aac"        = "mpv.desktop";
+      # cosmic-reader is now the only PDF viewer installed — papers was dropped
+      # from modules/nixos/apps.nix rather than keeping two. cosmic-reader also
+      # ships a thumbnailer, so PDFs get previews in cosmic-files.
+      "application/pdf"        = "com.system76.CosmicReader.desktop";
       "text/html"              = "firefox.desktop";
       "x-scheme-handler/http"  = "firefox.desktop";
       "x-scheme-handler/https" = "firefox.desktop";

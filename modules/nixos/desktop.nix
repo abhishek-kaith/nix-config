@@ -37,11 +37,19 @@
   # ── auth / secret service ────────────────────────────────────────
   # All three are also set by the COSMIC module (polkit/dconf outright, keyring
   # as an mkDefault). Stated here anyway because they are the floor any graphical
-  # session needs, not a COSMIC detail — the keyring is what Firefox stores its
-  # credentials in, and PAM-unlocking it is wired in cosmic.nix with the greeter.
+  # session needs, not a COSMIC detail — a DE swap should not silently take the
+  # Secret Service or the polkit agent with it.
+  #
+  # Correction worth keeping: this used to claim the keyring is where Firefox
+  # stores its credentials. It is not. Firefox keeps logins in logins.json +
+  # key4.db inside the profile and never touches the Secret Service — and
+  # modules/home/firefox.nix disables its password manager outright anyway, since
+  # KeePassXC is the store. The only real consumer on this machine is chromium
+  # (dev.nix), which uses it to encrypt its cookie store and falls back to
+  # plaintext without it; gvfs mounts and future flatpak apps may also want it.
   security.polkit.enable = true;
   programs.dconf.enable = true;                # gsettings/dconf backend for GTK apps
-  services.gnome.gnome-keyring.enable = true;  # Secret Service (browser creds, etc.)
+  services.gnome.gnome-keyring.enable = true;  # Secret Service — see the note above
 
   # ── xdg portals (file pickers + screencast under Wayland) ────────
   # Deliberately not configured here. Which portal backend can serve screencast
