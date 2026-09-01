@@ -27,8 +27,11 @@ modules/nixos/            # SYSTEM layer — imported by hosts/<h>/default.nix
   dev.nix                 #   nix-ld, podman, android tools, AI agents, `,` + nix-index
   desktop.nix             #   DE-agnostic floor: audio, fonts, polkit, gnome-keyring
   cosmic.nix              #   THE desktop environment: COSMIC (from unstable) + greeter
-  apps.nix                #   GUI apps COSMIC doesn't ship (mpv, qimgv, keepassxc, …)
+  apps.nix                #   GUI apps COSMIC doesn't ship (mpv, qimgv, gimp, satty,
+                          #   obs, libreoffice, keepassxc, …)
   syncthing.nix           #   file sync, GUI on localhost:8384
+  laptop.nix              #   t480 only: fwupd, lid->hibernate, battery thresholds
+  storage.nix             #   t480 only: btrfs scrub, smartd, snapper snapshots
 
 modules/home/             # USER layer — imported by hosts/<h>/home.nix
   git / zsh / tmux / scripts   #   shell + dotfile wiring
@@ -104,21 +107,39 @@ config too.
 worth knowing:
 
 **Packages come from `nixpkgs-unstable`, the module from stable.** nixos-26.05
-ships COSMIC epoch 1.2; unstable is on 1.5. The file overlays the COSMIC packages
+ships COSMIC epoch 1.2; unstable is on 1.6. The file overlays the COSMIC packages
 (comp, panel, settings, greeter, portal, …) with their unstable versions while the
 stable NixOS module keeps doing the session wiring — the same trick the old niri
 config used for `pkgs-unstable.niri`. The overlay is an **explicit attr table, not
 a `cosmic-*` glob**, so an upstream rename (1.5 renamed `cosmic-applibrary` →
 `cosmic-app-library`) fails the build loudly instead of quietly leaving one
-package behind at 1.2. If `nix flake update` ever errors with a missing
+package behind at 1.2. (Upstream has tagged epoch 1.7, but nixpkgs has not
+packaged it on any branch yet — 1.6 is the current ceiling.) If `nix flake update`
+ever errors with a missing
 `cosmic-…` attribute, that is this table asking to be updated — nothing is broken.
 
 **Login is passwordless.** `cosmic-greeter` runs on greetd, and
 `services.displayManager.autoLogin` makes greetd start the session directly at
 boot; the greeter itself is then only the lock screen and the post-logout login.
-Consequence: the gnome-keyring is **not** unlocked at boot (there is no password
-to unlock it with). KeePassXC is the real password store, so this only affects
-Firefox's fallback Secret Service use.
+Consequence: the gnome-keyring is **not** unlocked at boot — there is no password
+to unlock it with — so it comes up locked (a greeter login after a logout does
+unlock it). Locked is not broken: the first app to request a secret gets a gcr
+unlock/create dialog. In practice almost nothing here asks. Firefox does **not**
+use the Secret Service (it keeps logins in `logins.json`/`key4.db` in the profile,
+and its password manager is disabled anyway — KeePassXC is the store); the one
+real consumer is chromium, which uses it for its cookie encryption key and falls
+back to plaintext without it.
+
+**Two of COSMIC's own apps are excluded**, because this repo already installs a
+better-configured equivalent: `cosmic-player` (mpv is the video player and the
+video/audio mime handler) and `cosmic-term` (alacritty is the terminal). Both are
+in the module's optional list rather than its `corePkgs`, so dropping them is
+supported. Dropping cosmic-term is only safe because `modules/home/xdg.nix` sets
+`x-scheme-handler/terminal` — cosmic-files asks xdg-mime for that first and falls
+back to cosmic-term when it is unset. `cosmic-edit` is deliberately **kept**
+(otherwise nothing graphical opens a .txt), and so is `networkmanagerapplet` —
+its tray icon is dead under COSMIC, but it ships `nm-connection-editor`, the only
+GUI here that can configure a VPN or enterprise wifi.
 
 **COSMIC owns theming, keybinds and the wallpaper** — all of it lives in
 COSMIC Settings, not in this repo. There is no dotfile to edit and nothing
@@ -197,7 +218,17 @@ Open/close a port by editing the list:
 ```nix
 networking.firewall.allowedTCPPorts = [ 8080 ];   # (or allowedUDPPorts)
 ```
-sshd opens 22 itself; syncthing opens 22000/tcp + 21027/udp via its module.
+syncthing opens 22000/tcp + 21027/udp via its module. **The t480 runs no sshd** —
+it joins networks it does not control, and `openFirewall` would put :22 on every
+interface (see the comment in `hosts/t480/default.nix` for how to re-enable it
+key-only). The VMs do run one, on the local host network.
+
+**Flatpak / COSMIC Store** (`modules/nixos/apps.nix`) — Flatpak is on, and the
+**Flathub remote is registered declaratively** by the `flatpak-flathub-remote`
+systemd unit, so a fresh install comes up with a populated Store instead of an
+empty one. Note that `services.flatpak.enable` is also what makes the COSMIC
+module ship `cosmic-store` at all — turning Flatpak off removes the Store too.
+Check the remote with `flatpak remotes`; add another the same way as the unit does.
 
 **Git identity** — not stored in the repo. Set it once per machine:
 ```bash
@@ -209,6 +240,55 @@ The rest (rebase-on-pull, autostash, prune, zdiff3, histogram, …) is in
 
 **Syncthing** — web UI at http://127.0.0.1:8384 (localhost only). Add folders /
 pair devices there; nix won't overwrite them.
+
+**Power / lid (t480)** (`modules/nixos/laptop.nix`) — closing the lid suspends,
+and after 30 minutes shut it hibernates to the encrypted swap LV and powers off
+(`HibernateDelaySec`). Battery charging stops at 80% and does not resume until
+75%, which is what keeps a machine that lives on AC from cycling at 100% all day.
+COSMIC Settings **cannot** set those thresholds — cosmic-settings 1.6 only renders
+the power-profile list — so they are written to sysfs by a small systemd unit.
+Going away without a charger? Raise `chargeStart` / `chargeEnd` at the top of that
+file to 95/100 and rebuild. Check what is in force with:
+```bash
+cat /sys/class/power_supply/BAT*/charge_control_{start,end}_threshold
+```
+
+**Firmware updates (t480)** — `fwupd` is on, so Lenovo's UEFI and Thunderbolt
+updates come from LVFS: `fwupdmgr refresh && fwupdmgr get-updates && fwupdmgr
+update`. A UEFI capsule is staged on the ESP and applies during the *next* boot.
+
+**Snapshots (t480)** (`modules/nixos/storage.nix`) — snapper takes hourly
+timeline snapshots of `/` and `/home` (`/nix` is excluded: it is reproducible from
+this repo and would pin every path `nix.gc` wants to delete).
+```bash
+snapper -c home list                        # what exists
+snapper -c home status 42..43               # what changed between two
+snapper -c home undochange 42..43 some/file # put a file back
+```
+These live on the same disk as the data, so they are an **undo, not a backup** —
+they do not survive a dead SSD or a stolen laptop, and syncthing is replication
+(it propagates deletions), not a backup either. Off-machine copies are still an
+open item. btrfs scrub runs monthly and smartd watches the NVMe; both only report.
+
+**Terminal colours follow COSMIC** (`modules/home/cosmic-theme-sync.nix`) — flip
+COSMIC between light and dark and the terminal follows, live, in windows already
+open. Two committed palettes are *selected* between, never generated:
+`config/alacritty/colors-{dark,light}.toml` (tokyonight night/day). COSMIC's
+accent colour is applied to the **cursor and selection only** — deliberately not
+to the 16 ANSI colours, which carry meaning (red = error, green = added line)
+that a purple accent would wreck for `git diff` and `ls`.
+
+Most of the shell comes along for free, because starship, fzf, eza and
+zsh-syntax-highlighting name no colours of their own — they ask for ANSI slots,
+so repainting the terminal repaints them. `BAT_THEME=ansi` (`config/zsh/rc.zsh`)
+puts bat and delta in the same boat. neovim and btop keep their own themes.
+
+Run `cosmic-theme-sync` by hand to see what it decided. If it never runs, the
+generated `~/.config/alacritty/colors-active.toml` simply does not exist,
+alacritty skips that import, and you get `colors-dark.toml` — the old static
+behaviour. One caveat: alacritty only live-reloads files it knew about at
+startup, so the very first time that file appears, terminals already open need a
+restart. After that, changes are live.
 
 **Keybinds, theming, wallpaper, displays** — COSMIC Settings, not this repo.
 Keyboard shortcuts are per-user state under `~/.config/cosmic/`; nix does not
