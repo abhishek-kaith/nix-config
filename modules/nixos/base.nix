@@ -10,7 +10,12 @@
   # A4 paper. `supportedLocales` has to list en_IN explicitly, because NixOS only
   # generates C.UTF-8 + defaultLocale by default; without it these settings name a
   # locale glibc never built and every one of them silently falls back to C.
-  i18n.supportedLocales = [ "C.UTF-8/UTF-8" "en_US.UTF-8/UTF-8" "en_IN.UTF-8/UTF-8" ];
+  # Note the asymmetry, it is not a typo: glibc's SUPPORTED list carries
+  # `en_US.UTF-8/UTF-8` but `en_IN/UTF-8` — en_IN has no codeset-suffixed
+  # variant. Writing "en_IN.UTF-8/UTF-8" fails the glibc-locales build with
+  # "you should choose from the list", and `nix eval` will NOT catch it because
+  # evaluating a config never builds the locale archive.
+  i18n.supportedLocales = [ "C.UTF-8/UTF-8" "en_US.UTF-8/UTF-8" "en_IN/UTF-8" ];
   i18n.extraLocaleSettings = {
     LC_TIME        = "en_IN.UTF-8";
     LC_MONETARY    = "en_IN.UTF-8";
