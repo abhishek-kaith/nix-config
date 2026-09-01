@@ -53,10 +53,14 @@
           content = {
             type      = "btrfs";
             extraArgs = [ "-f" ];
+            # discard=async: trim continuously in the background instead of in one
+            # weekly burst (services.fstrim stays as a backstop). Set only here —
+            # the VM hosts drop it, since discard on a virtual disk only does
+            # anything if the hypervisor passes it through.
             subvolumes = {
-              "@root" = { mountpoint = "/";     mountOptions = [ "compress=zstd" "noatime" ]; };
-              "@home" = { mountpoint = "/home"; mountOptions = [ "compress=zstd" "noatime" ]; };
-              "@nix"  = { mountpoint = "/nix";  mountOptions = [ "compress=zstd" "noatime" ]; };
+              "@root" = { mountpoint = "/";     mountOptions = [ "compress=zstd" "noatime" "discard=async" ]; };
+              "@home" = { mountpoint = "/home"; mountOptions = [ "compress=zstd" "noatime" "discard=async" ]; };
+              "@nix"  = { mountpoint = "/nix";  mountOptions = [ "compress=zstd" "noatime" "discard=async" ]; };
             };
           };
         };
