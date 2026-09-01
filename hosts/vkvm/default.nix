@@ -46,8 +46,18 @@
     settings.PasswordAuthentication = true;
   };
 
-  # QEMU guest agent: graceful shutdown, host↔VM clipboard
+  # QEMU guest agent: graceful shutdown/reboot from the host, and IP reporting to
+  # virsh. It does NOT do clipboard or display resize — that is the SPICE agent
+  # below, and the comment here used to claim otherwise.
   services.qemuGuest.enable = true;
+
+  # SPICE guest agent: shared clipboard and guest display auto-resize when the VM
+  # runs on a SPICE display (virt-manager's default). Needs `-device virtio-serial`
+  # plus the org.spice-space.webdav/vdagent channel on the host side — virt-manager
+  # wires that up itself; a hand-rolled qemu command line has to add it.
+  # Under Wayland the clipboard half works through wlr-data-control, which
+  # cosmic-comp implements; the resize half goes through the agent either way.
+  services.spice-vdagentd.enable = true;
 
   system.stateVersion = "26.05";
 }
