@@ -30,7 +30,19 @@
 
     # ── wayland / desktop CLI ─────────────────────────────────────
     wl-clipboard            # wl-copy / wl-paste — piping to and from the clipboard
+
+    # ── media / documents from the shell ──────────────────────────
+    # The GUI side of this (mpv, qimgv, papers) is apps.nix; these are the tools
+    # for doing something *to* a file rather than looking at it.
+    ffmpeg                  # transcode/cut/concat A/V. Note yt-dlp does NOT need
+                            # this — nixpkgs already wraps ffmpeg-headless into its
+                            # PATH — this is for calling ffmpeg/ffprobe yourself.
     imagemagick             # convert/mogrify/identify for image work from the shell
+    exiftool                # read/strip image + video metadata (EXIF, GPS, …)
+    poppler-utils           # pdftotext / pdfimages / pdfunite — the CLI half of PDF
+    mediainfo               # what codec/bitrate/profile is actually in this file
+    libva-utils             # `vainfo`: prove the Intel HW decode path really works
+                            # (nixos-hardware installs the driver; nothing verified it)
 
     # ── archives ──────────────────────────────────────────────────
     unzip zip p7zip rsync
@@ -47,7 +59,12 @@
     gping speedtest-cli iftop   # ping-graph / ISP speed / live iface usage
 
     # ── DNS ───────────────────────────────────────────────────────
-    dig dnsutils            # dig + nslookup + host
+    # `dnsutils` alone, NOT `dnsutils` + `dig`. In nixpkgs those are two separate
+    # derivations of the same bind output (`dig` re-wraps it only to set
+    # meta.mainProgram), so asking for both pulls two copies into the closure and
+    # collides on bin/dig, bin/host and bin/nslookup — buildEnv then prints a
+    # collision warning on every rebuild and picks one arbitrarily.
+    dnsutils                # dig + nslookup + host
     doggo                   # modern, colourful dig (DoH/DoT aware)
 
     # ── HTTP / API ────────────────────────────────────────────────
