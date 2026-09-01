@@ -1,0 +1,39 @@
+# ── tokyonight (day) ─────────────────────────────────────────────────
+# The light half, chosen as the same family as colors-dark.toml so the terminal
+# keeps its identity when COSMIC flips — this is a sibling of the night variant,
+# not an unrelated light theme.
+#
+# Only ever selected by cosmic-theme-sync (modules/home/cosmic-theme-sync.nix),
+# which copies it to ~/.config/alacritty/colors-active.toml when COSMIC reports
+# light mode. Key set must stay IDENTICAL to colors-dark.toml — see the note there.
+[colors.primary]
+background = "#e1e2e7"
+foreground = "#3760bf"
+
+[colors.cursor]
+text   = "#e1e2e7"
+cursor = "#3760bf"
+
+[colors.selection]
+background = "#b6bfe2"
+text       = "CellForeground"
+
+[colors.normal]
+black   = "#b4b5b9"
+red     = "#f52a65"
+green   = "#587539"
+yellow  = "#8c6c3e"
+blue    = "#2e7de9"
+magenta = "#9854f1"
+cyan    = "#007197"
+white   = "#6172b0"
+
+[colors.bright]
+black   = "#a1a6c5"
+red     = "#f52a65"
+green   = "#587539"
+yellow  = "#8c6c3e"
+blue    = "#2e7de9"
+magenta = "#9854f1"
+cyan    = "#007197"
+white   = "#3760bf"
