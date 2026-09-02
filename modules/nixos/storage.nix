@@ -51,6 +51,18 @@
     home = {
       SUBVOLUME        = "/home";
       ALLOW_USERS      = [ user ];   # so `snapper -c home list` needs no sudo
+      # ALLOW_USERS on its own only covers snapper's own commands — it does NOT
+      # grant access to the /home/.snapshots tree, which snapper-bootstrap below
+      # creates 0750 root:root. Without this, recovering a file by plain `cp` out
+      # of a snapshot needs sudo, which is the most common thing you actually do
+      # here. SYNC_ACL puts ALLOW_USERS on the directory as an ACL instead.
+      #
+      # Safe because it grants traversal of .snapshots and nothing more: the files
+      # inside each snapshot keep the ownership and mode they had when it was
+      # taken, so this exposes the user's own files back to them and no one else's.
+      # Not set on the `root` config on purpose — those snapshots contain /etc and
+      # /var, and there is no reason to hand a normal user a readable copy.
+      SYNC_ACL         = true;
       TIMELINE_CREATE  = true;
       TIMELINE_CLEANUP = true;
       # Deeper, because this is the subvolume holding work that exists nowhere else.
