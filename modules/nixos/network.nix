@@ -2,6 +2,14 @@
 {
   networking.networkmanager.enable = true;
 
+  # Do not hold the boot for the network. NetworkManager-wait-online blocks
+  # network-online.target (and everything ordered after it) until a connection
+  # is up — on wifi that is routinely 5-30s of a black screen for nothing the
+  # desktop needs. The only units here that order after network-online are the
+  # flatpak ones in apps.nix / cosmic.nix, and they retry themselves every 30s
+  # until the network is actually there. Nothing else waits for a link.
+  systemd.services.NetworkManager-wait-online.enable = false;
+
   # ── DNS: Quad9 primary, Cloudflare fallback, encrypted where possible ──
   # NetworkManager ignores `networking.nameservers` on its own, so hand DNS to
   # systemd-resolved and let it apply our resolvers globally.

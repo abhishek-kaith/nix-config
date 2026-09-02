@@ -9,7 +9,7 @@
     ../../modules/home/direnv.nix     # direnv + nix-direnv
     ../../modules/home/neovim.nix     # editable nvim config (out-of-store)
     ../../modules/home/firefox.nix    # hardened firefox + uBlock + keepassxc
-    ../../modules/home/gtk-theme-sync.nix # old GTK apps follow COSMIC light/dark
+    ../../modules/home/cosmic.nix     # the DE, user half: COSMIC mime defaults + GTK3 light/dark sync
     ../../modules/home/starship.nix   # prompt config (out-of-store)
     ../../modules/home/easyeffects.nix # mic denoise/AGC chain (laptop mic)
   ];

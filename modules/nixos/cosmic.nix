@@ -51,10 +51,11 @@ let
   };
 in
 {
-  # This file is THE desktop-environment layer: it is imported by every graphical
-  # host in place of a compositor module, and nothing else in the repo depends on
-  # COSMIC specifically. Swapping DE later = write modules/nixos/<de>.nix and
-  # change one import line per host.
+  # This file is the SYSTEM half of the desktop-environment layer; the user half
+  # (mime defaults for COSMIC's apps, the GTK3 light/dark sync) is
+  # modules/home/cosmic.nix. Every graphical host imports the pair, and nothing
+  # else in the repo depends on COSMIC specifically. Swapping DE later = write
+  # the same pair for the new one and change two import lines per host.
   nixpkgs.overlays = [
     (_final: _prev: lib.mapAttrs (_stable: unstable: pkgs-unstable.${unstable}) cosmicPackages)
   ];
@@ -67,7 +68,7 @@ in
   environment.systemPackages = [
     pkgs-unstable.cosmic-sound-theme
 
-    # The GTK3 theme modules/home/gtk-theme-sync.nix points settings.ini at; see
+    # The GTK3 theme modules/home/cosmic.nix points settings.ini at; see
     # the toolkit section below for why that service has to exist at all.
     #
     # SYSTEM packages rather than home.packages on purpose: GTK finds themes by
@@ -122,7 +123,7 @@ in
   #                sole levers are gtk-theme-name and
   #                gtk-application-prefer-dark-theme, reachable only through
   #                settings.ini. Writing that file is the entire job of
-  #                modules/home/gtk-theme-sync.nix. GIMP, meld and
+  #                modules/home/cosmic.nix. GIMP, meld and
   #                nm-connection-editor live in this tier.
   #   Qt5          libQt5Gui (5.15) has neither string. Nothing installed here is
   #                Qt5 today; if a Qt5 app ever appears it needs qt5ct or
@@ -163,19 +164,25 @@ in
   # every graphical host imports) so this file stays importable on its own.
   systemd.services.flatpak-gtk3-theme = lib.mkIf config.services.flatpak.enable {
     description = "Install the adw-gtk3 flatpak theme and grant GTK config access";
-    # flatpak-flathub-remote (apps.nix) is what registers the remote installed
-    # from, so this is `requires`, not just `after`: on a first boot that had no
-    # network the remote unit fails, and there is nothing for this one to do.
+    # flatpak-flathub-remote (apps.nix) registers the remote this installs from.
+    # `wants` + `after`, deliberately not `requires`: with wait-online off
+    # (network.nix) the remote unit can fail on a first boot and then retry itself,
+    # and a Requires= would have marked this unit failed at that first attempt
+    # with no way to be pulled back in when the remote finally lands. Instead this
+    # unit retries on its own the same way — `flatpak install` exits non-zero with
+    # no remote or no network, and 30s later it tries again.
     after    = [ "network-online.target" "flatpak-flathub-remote.service" ];
-    requires = [ "flatpak-flathub-remote.service" ];
-    wants    = [ "network-online.target" ];
+    wants    = [ "network-online.target" "flatpak-flathub-remote.service" ];
     wantedBy = [ "multi-user.target" ];
+    startLimitIntervalSec = 0;
     # config.services.flatpak.package, not pkgs.flatpak — same reasoning as the
     # remote unit in apps.nix: it cannot drift from the version actually running.
     path = [ config.services.flatpak.package ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+      Restart = "on-failure";
+      RestartSec = "30s";
     };
     script = ''
       # Checked by hand rather than with an --if-not-exists style flag, because
@@ -220,8 +227,8 @@ in
 
   # ── how to drop all of the above ─────────────────────────────────
   # Written down because it is obvious today and gone in six months. The nix half
-  # unwinds by itself: delete the two units and `pkgs.adw-gtk3` here, drop
-  # modules/home/gtk-theme-sync.nix and its import from hosts/*/home.nix, rebuild.
+  # unwinds by itself: delete the two units and `pkgs.adw-gtk3` here, drop the
+  # gtk-theme-sync half of modules/home/cosmic.nix, rebuild.
   # home-manager's startServices defaults to true, so it STOPS the obsolete user
   # units for you; NixOS removes the system one. Keep the toolkit map above even
   # then — it is the record of *why*.

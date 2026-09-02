@@ -18,26 +18,13 @@
 
   # Default apps for `xdg-open` / "Open with". Only map to apps that are actually
   # installed — a mapping to a missing .desktop silently does nothing.
+  #
+  # Only DE-agnostic handlers here. The ones that point at the desktop's own apps
+  # (directories, terminal, plain text, PDF) live in modules/home/<de>.nix, so a
+  # DE swap does not have to touch this file.
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      # Directories: what opens when an app says "show in file manager". Thunar
-      # used to claim this by itself; cosmic-files ships the only inode/directory
-      # handler now, but nothing sets it as the *default*, so state it.
-      "inode/directory"  = "com.system76.CosmicFiles.desktop";
-
-      # Which terminal "Open in Terminal" uses. cosmic-files asks xdg-mime for
-      # this handler first and falls back to com.system76.CosmicTerm when unset,
-      # so this line is redundant FOR cosmic-files — it is here for everything
-      # else that resolves a terminal through xdg-mime rather than hardcoding
-      # COSMIC's, which is most of them.
-      "x-scheme-handler/terminal" = "com.system76.CosmicTerm.desktop";
-
-      # Plain text. cosmic-edit is kept installed precisely so this has somewhere
-      # to go (see modules/nixos/cosmic.nix); without the mapping it depended on
-      # whichever app happened to register for text/plain first.
-      "text/plain"       = "com.system76.CosmicEdit.desktop";
-
       "image/png"        = "qimgv.desktop";
       "image/jpeg"       = "qimgv.desktop";
       "image/gif"        = "qimgv.desktop";
@@ -57,9 +44,8 @@
       "video/x-msvideo"  = "mpv.desktop";     # .avi
       "video/mpeg"       = "mpv.desktop";
 
-      # Audio had NO mapping at all: with cosmic-player excluded in favour of mpv,
-      # double-clicking an .mp3 in cosmic-files had nothing registered to open it.
-      # mpv plays audio perfectly well (it draws no window for audio-only files).
+      # Audio too: mpv plays it perfectly well (no window for audio-only files),
+      # and without a mapping double-clicking an .mp3 had nothing to open it.
       "audio/mpeg"       = "mpv.desktop";     # .mp3
       "audio/flac"       = "mpv.desktop";
       "audio/x-wav"      = "mpv.desktop";
@@ -67,10 +53,6 @@
       "audio/opus"       = "mpv.desktop";
       "audio/mp4"        = "mpv.desktop";     # .m4a
       "audio/aac"        = "mpv.desktop";
-      # cosmic-reader is now the only PDF viewer installed — papers was dropped
-      # from modules/nixos/apps.nix rather than keeping two. cosmic-reader also
-      # ships a thumbnailer, so PDFs get previews in cosmic-files.
-      "application/pdf"        = "com.system76.CosmicReader.desktop";
       "text/html"              = "firefox.desktop";
       "x-scheme-handler/http"  = "firefox.desktop";
       "x-scheme-handler/https" = "firefox.desktop";

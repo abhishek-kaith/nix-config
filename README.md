@@ -35,13 +35,14 @@ modules/nixos/            # SYSTEM layer — imported by hosts/<h>/default.nix
 
 modules/home/             # USER layer — imported by hosts/<h>/home.nix
   git / zsh / tmux / scripts   #   shell + dotfile wiring
-  xdg.nix                 #   XDG user dirs + mime defaults
+  xdg.nix                 #   XDG user dirs + DE-agnostic mime defaults (mpv, qimgv, firefox)
   direnv.nix              #   direnv + nix-direnv
   firefox.nix             #   hardened firefox + forced extensions
   neovim.nix              #   editable nvim config (out-of-store)
   easyeffects.nix         #   mic denoise/AGC chain (t480 only)
   starship.nix            #   prompt (live-editable config)
-  gtk-theme-sync.nix      #   old GTK apps follow COSMIC's light/dark switch
+  cosmic.nix              #   THE desktop environment, user half: mime defaults for
+                          #   COSMIC's apps + old GTK apps follow its light/dark switch
 
 hosts/<h>/                # PER-HOST — only what differs between machines
   default.nix             #   hostname, bootloader, users, ssh, quirks + module imports
@@ -54,10 +55,45 @@ hosts/<h>/                # PER-HOST — only what differs between machines
 disk layout, guest additions, VM display quirks, `hostName`) → `hosts/<h>/`.
 Anything shared → the matching `modules/nixos/*` or `modules/home/*` by concern.
 
-The desktop environment is deliberately **one file, imported once per graphical
-host**: `modules/nixos/cosmic.nix`. Nothing else in the repo names COSMIC. To try
-a different DE later, write `modules/nixos/<de>.nix` alongside it and change one
-import line per host — `desktop.nix` (audio/fonts/keyring) and `apps.nix` stay put.
+The desktop environment is deliberately **one pair of files, imported once per
+graphical host**: `modules/nixos/cosmic.nix` (compositor, greeter, portals, GTK
+theme glue) and `modules/home/cosmic.nix` (mime defaults for its apps, GTK3
+light/dark sync). Nothing else in the repo names COSMIC — `desktop.nix`
+(audio/fonts/keyring), `apps.nix` and `xdg.nix` are what stays identical across
+desktops.
+
+### How this repo grows
+
+The rules that keep it simple. There are **no enable-flags, no profiles, no
+`mkIf hostName`** — a host is exactly its import list, and a little duplication
+between hosts is the accepted price of being able to read one file and know what
+a machine does.
+
+**Add a shared concern** (a service, a tool group, a piece of tuning) — one new
+file `modules/nixos/<concern>.nix` or `modules/home/<concern>.nix`, then add the
+import line to *each host that wants it*. A concern only one host uses still goes
+in `modules/` if it is about a *kind* of machine (`laptop.nix`, `storage.nix`),
+and in `hosts/<h>/` if it is about *that* machine.
+
+**Add a host** — copy the nearest existing `hosts/<h>/`, then change four things:
+the `nixos-hardware` line (e.g. `lenovo-thinkpad-t14-amd-gen1`), `disko.nix`,
+`hardware-configuration.nix` (from `nixos-generate-config` on the live ISO), and
+`hostName`. Add one line to `nixosConfigurations` in `flake.nix`. That is all —
+`laptop.nix` is generic ThinkPad sysfs, and every module is hardware-agnostic.
+An `aarch64-linux` machine (e.g. Asahi on an M-series MacBook) is
+`lib.mkHost { system = "aarch64-linux"; … }` plus that platform's input; a
+*macOS* machine would be nix-darwin and would reuse only `modules/home/` — which
+works because home imports are explicit per host, so it simply does not import
+`easyeffects.nix` or `cosmic.nix`.
+
+**Switch desktop** (KDE, niri, Hyprland, …) — write the pair
+`modules/nixos/<de>.nix` + `modules/home/<de>.nix` next to the COSMIC ones and
+flip the two import lines in the host. One DE per host at a time — greeter,
+autologin, portals and theming all collide if two are installed. To *try* one,
+switch a VM host first; the laptop keeps running COSMIC until it is proven.
+
+**Something only for you, not for the machine** (prompt, editor config, scripts)
+— `config/`, referenced live from the working tree; no rebuild.
 
 ---
 
@@ -197,7 +233,18 @@ nix eval .#nixosConfigurations.t480.config.networking.hostName
 
 # garbage collect
 nix-collect-garbage -d
+
+# where the boot time goes (measure before tuning anything)
+systemd-analyze && systemd-analyze critical-chain
 ```
+
+Boot is already trimmed: no bootloader menu (`timeout = 0`, hold Space for it),
+systemd in the initrd, passwordless autologin into the session, and
+`NetworkManager-wait-online` is off so nothing blocks on wifi coming up (the
+flatpak units that need the network retry themselves until it is there). What
+remains is the LUKS passphrase prompt — a TPM2 enrolment
+(`systemd-cryptenroll --tpm2-device=auto`) would make that hands-free, but it is
+a deliberate security trade-off, not something this repo turns on.
 
 > `system.stateVersion` / `home.stateVersion` (`26.05`) is a **compatibility marker
 > pinned to the install version** — leave it fixed even after upgrading to a newer
@@ -291,7 +338,7 @@ Plain GTK3 has no concept of a colour-scheme *preference* at all: `libgdk-3`
 symbol is the deprecated GTK2-era colour-*palette* property. Its sole levers are
 `gtk-theme-name` and `gtk-application-prefer-dark-theme`, reachable only through
 `settings.ini`. GIMP, Meld and `nm-connection-editor` sit in that tier, and no
-configuration can make them native — so `modules/home/gtk-theme-sync.nix` runs a
+configuration can make them native — so `modules/home/cosmic.nix` runs a
 `.path` unit on COSMIC's `is_dark` flag and writes that file (`adw-gtk3` /
 `adw-gtk3-dark` for gtk-3.0, prefer-dark only for gtk-4.0), plus the matching
 GSettings keys. The theme itself is installed system-wide in `cosmic.nix`, so the

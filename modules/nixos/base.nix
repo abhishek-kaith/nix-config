@@ -7,22 +7,23 @@
   # The interface language stays en_US (that is what upstream software is written
   # and tested in), but the machine lives in India — so the formats that describe
   # the *place* come from en_IN: dates as dd/mm/yyyy, ₹ for money, metric units,
-  # A4 paper. `supportedLocales` has to list en_IN explicitly, because NixOS only
-  # generates C.UTF-8 + defaultLocale by default; without it these settings name a
-  # locale glibc never built and every one of them silently falls back to C.
-  # Note the asymmetry, it is not a typo: glibc's SUPPORTED list carries
-  # `en_US.UTF-8/UTF-8` but `en_IN/UTF-8` — en_IN has no codeset-suffixed
-  # variant. Writing "en_IN.UTF-8/UTF-8" fails the glibc-locales build with
-  # "you should choose from the list", and `nix eval` will NOT catch it because
-  # evaluating a config never builds the locale archive.
-  i18n.supportedLocales = [ "C.UTF-8/UTF-8" "en_US.UTF-8/UTF-8" "en_IN/UTF-8" ];
+  # A4 paper.
+  #
+  # NixOS builds the locale archive from defaultLocale + every locale named here
+  # (+ i18n.extraLocales for anything else), as "<name>/UTF-8". So the name used
+  # here has to be one glibc's SUPPORTED list actually carries — and it is
+  # `en_IN/UTF-8`, NOT `en_IN.UTF-8/UTF-8`: unlike en_US, en_IN has no
+  # codeset-suffixed variant. Writing "en_IN.UTF-8" below therefore fails the
+  # glibc-locales build with "you should choose from the list", and `nix eval`
+  # will NOT catch it because evaluating a config never builds the archive.
+  # Plain "en_IN" is the UTF-8 locale (the archive holds it as en_IN + en_IN.utf8).
   i18n.extraLocaleSettings = {
-    LC_TIME        = "en_IN.UTF-8";
-    LC_MONETARY    = "en_IN.UTF-8";
-    LC_MEASUREMENT = "en_IN.UTF-8";
-    LC_PAPER       = "en_IN.UTF-8";
-    LC_ADDRESS     = "en_IN.UTF-8";
-    LC_TELEPHONE   = "en_IN.UTF-8";
+    LC_TIME        = "en_IN";
+    LC_MONETARY    = "en_IN";
+    LC_MEASUREMENT = "en_IN";
+    LC_PAPER       = "en_IN";
+    LC_ADDRESS     = "en_IN";
+    LC_TELEPHONE   = "en_IN";
     # LC_NUMERIC is deliberately NOT switched. en_IN groups digits the Indian way
     # (1,00,000 rather than 100,000), and that grouping leaks into the output of
     # sort, awk, printf and anything else that formats numbers for a human —

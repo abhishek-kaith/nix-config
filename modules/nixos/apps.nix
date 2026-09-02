@@ -70,17 +70,26 @@
     description = "Register the Flathub remote with flatpak";
     # Needs the network only on the FIRST successful run: --if-not-exists checks
     # for the remote before fetching anything, so once Flathub is registered this
-    # is a no-op that never touches the network again. If the very first boot
-    # happens offline the unit fails and the next boot registers it.
+    # is a no-op that never touches the network again.
+    #
+    # network-online.target is NOT a guarantee of a link here: network.nix turns
+    # NetworkManager-wait-online off so the boot does not stall on wifi, which
+    # means this can (and on a fresh install's first boot, will) run before there
+    # is a connection. So instead of failing once and waiting for the next boot,
+    # it retries every 30s until it succeeds — Restart= on a oneshot is allowed
+    # for exactly this, and RemainAfterExit stops the retries once it has worked.
     after    = [ "network-online.target" "flatpak-system-helper.service" ];
     wants    = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
+    startLimitIntervalSec = 0;   # never trip the 5-starts-in-10s rate limit
     # config.services.flatpak.package, not pkgs.flatpak, so this cannot drift from
     # whatever version the module above is actually running.
     path = [ config.services.flatpak.package ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+      Restart = "on-failure";
+      RestartSec = "30s";
     };
     script = ''
       flatpak remote-add --if-not-exists flathub \
