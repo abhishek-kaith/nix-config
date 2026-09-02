@@ -75,6 +75,17 @@
       options   = "--delete-older-than 30d";
     };
     channel.enable = false; # flakes handle pinning; channels are redundant
+
+    # A rebuild should not make the desktop, the browser or a running agent
+    # stutter. `batch` tells the scheduler the daemon's work is throughput, not
+    # latency — it still gets its fair share of CPU, just never at the expense of
+    # something interactive. Deliberately NOT `idle`: that gives builds zero CPU
+    # whenever anything else wants some, and with agents busy in the background
+    # a rebuild could then crawl for an hour. I/O likewise: lowest best-effort
+    # priority rather than idle, so a build progresses while a browser thrashes.
+    daemonCPUSchedPolicy  = "batch";
+    daemonIOSchedClass    = "best-effort";
+    daemonIOSchedPriority = 7;
   };
 
   # Store deduplication, moved OFF the build path. `auto-optimise-store = true`

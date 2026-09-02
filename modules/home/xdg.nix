@@ -1,9 +1,15 @@
-{ config, ... }:
+{ config, lib, ... }:
 {
   xdg.enable = true;
 
   # Standard user directories — file dialogs, portals, screenshot paths and many
   # apps read ~/.config/user-dirs.dirs; without it everything defaults to $HOME.
+  # `projects` (~/Projects) is in the list too: home-manager defaults it, so it
+  # is not spelled out below, but it is what tmux-sessionizer walks.
+  #
+  # createDirectories is a `mkdir -p` at activation: it only ever ADDS missing
+  # directories. Nothing here — rebuild, switch, update, GC — removes or empties
+  # one; home-manager manages the files it linked, never these directories.
   xdg.userDirs = {
     enable            = true;
     createDirectories = true;
@@ -15,6 +21,17 @@
     videos    = "${config.home.homeDirectory}/Videos";
     extraConfig.XDG_SCREENSHOTS_DIR = "${config.home.homeDirectory}/Pictures/Screenshots";
   };
+
+  # The two Projects subtrees tmux-sessionizer looks in (config/scripts). Not an
+  # XDG dir — there is no key for them and inventing one would export a bogus
+  # XDG_*_DIR variable — so a plain idempotent mkdir at activation, after the
+  # userDirs step above has created ~/Projects itself. Same guarantee: only
+  # creates, never touches an existing directory or anything inside it.
+  home.activation.projectDirs = lib.hm.dag.entryAfter [ "createXdgUserDirectories" ] ''
+    run mkdir -p $VERBOSE_ARG \
+      "${config.xdg.userDirs.projects}/work" \
+      "${config.xdg.userDirs.projects}/personal"
+  '';
 
   # Default apps for `xdg-open` / "Open with". Only map to apps that are actually
   # installed — a mapping to a missing .desktop silently does nothing.
