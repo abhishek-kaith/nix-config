@@ -60,7 +60,7 @@
           # Seed this repo into the new system so the editable configs resolve on
           # first boot. Everything hangs off repoDir (/home/<user>/nix-config):
           # niri/tmux-sessionizer are out-of-store symlinks into it, and zsh/tmux/
-          # git/alacritty source files from it. Without this the fresh install comes
+          # git source files from it. Without this the fresh install comes
           # up with dangling symlinks and an empty shell until a manual git clone.
           #
           # Derive the user from the freshly-installed /mnt/etc/passwd (name, uid,

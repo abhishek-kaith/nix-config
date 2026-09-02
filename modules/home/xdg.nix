@@ -27,12 +27,11 @@
       "inode/directory"  = "com.system76.CosmicFiles.desktop";
 
       # Which terminal "Open in Terminal" uses. cosmic-files asks xdg-mime for
-      # this handler first and only falls back to com.system76.CosmicTerm when it
-      # is unset — which is why setting it is what makes excluding cosmic-term
-      # (modules/nixos/cosmic.nix) safe. It launches the terminal with the folder
-      # as the process working directory, not as an argument, so Alacritty.desktop
-      # taking no field codes in its Exec is fine.
-      "x-scheme-handler/terminal" = "Alacritty.desktop";
+      # this handler first and falls back to com.system76.CosmicTerm when unset,
+      # so this line is redundant FOR cosmic-files — it is here for everything
+      # else that resolves a terminal through xdg-mime rather than hardcoding
+      # COSMIC's, which is most of them.
+      "x-scheme-handler/terminal" = "com.system76.CosmicTerm.desktop";
 
       # Plain text. cosmic-edit is kept installed precisely so this has somewhere
       # to go (see modules/nixos/cosmic.nix); without the mapping it depended on

@@ -9,8 +9,7 @@
     ../../modules/home/direnv.nix     # direnv + nix-direnv
     ../../modules/home/neovim.nix     # editable nvim config (out-of-store)
     ../../modules/home/firefox.nix    # hardened firefox + uBlock + keepassxc
-    ../../modules/home/alacritty.nix  # terminal (out-of-store config + colours)
-    ../../modules/home/cosmic-theme-sync.nix # terminal palette follows COSMIC light/dark
+    ../../modules/home/gtk-theme-sync.nix # old GTK apps follow COSMIC light/dark
     ../../modules/home/starship.nix   # prompt config (out-of-store)
     ../../modules/home/easyeffects.nix # mic denoise/AGC chain (laptop mic)
   ];

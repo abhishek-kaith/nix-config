@@ -40,7 +40,8 @@ modules/home/             # USER layer — imported by hosts/<h>/home.nix
   firefox.nix             #   hardened firefox + forced extensions
   neovim.nix              #   editable nvim config (out-of-store)
   easyeffects.nix         #   mic denoise/AGC chain (t480 only)
-  alacritty.nix / starship.nix #   terminal + prompt (live-editable configs)
+  starship.nix            #   prompt (live-editable config)
+  gtk-theme-sync.nix      #   old GTK apps follow COSMIC's light/dark switch
 
 hosts/<h>/                # PER-HOST — only what differs between machines
   default.nix             #   hostname, bootloader, users, ssh, quirks + module imports
@@ -130,21 +131,21 @@ and its password manager is disabled anyway — KeePassXC is the store); the one
 real consumer is chromium, which uses it for its cookie encryption key and falls
 back to plaintext without it.
 
-**Two of COSMIC's own apps are excluded**, because this repo already installs a
+**One of COSMIC's own apps is excluded**, because this repo already installs a
 better-configured equivalent: `cosmic-player` (mpv is the video player and the
-video/audio mime handler) and `cosmic-term` (alacritty is the terminal). Both are
-in the module's optional list rather than its `corePkgs`, so dropping them is
-supported. Dropping cosmic-term is only safe because `modules/home/xdg.nix` sets
-`x-scheme-handler/terminal` — cosmic-files asks xdg-mime for that first and falls
-back to cosmic-term when it is unset. `cosmic-edit` is deliberately **kept**
+video/audio mime handler). It is in the module's optional list rather than its
+`corePkgs`, so dropping it is supported. `cosmic-term` is **kept** and is the
+terminal — it reads `com.system76.CosmicTheme.*` directly, so light/dark and the
+accent follow the desktop with no sync machinery at all, which is why alacritty
+and its palette-sync service were dropped. `cosmic-edit` is likewise kept
 (otherwise nothing graphical opens a .txt), and so is `networkmanagerapplet` —
 its tray icon is dead under COSMIC, but it ships `nm-connection-editor`, the only
 GUI here that can configure a VPN or enterprise wifi.
 
 **COSMIC owns theming, keybinds and the wallpaper** — all of it lives in
-COSMIC Settings, not in this repo. There is no dotfile to edit and nothing
-generates colour palettes at runtime any more; the terminal's palette is a static
-block in `config/alacritty/alacritty.toml`.
+COSMIC Settings, not in this repo. There is no dotfile to edit and no colour
+palette generated at runtime; COSMIC-native and libadwaita apps follow it on
+their own. The one exception is plain GTK3, below.
 
 **Adding a binary cache in future:** get the `cachix use <name>` URL + public key
 from its page on `cachix.org`, then add them to a module's `nix.settings`
@@ -162,7 +163,6 @@ on an already-running host).
 
 | Config | How it's wired | Reload |
 |---|---|---|
-| alacritty | `settings.general.import` of the repo TOML | instant (`live_config_reload`) |
 | starship | `mkOutOfStoreSymlink` → `~/.config/starship.toml` | new prompt |
 | tmux | `source-file` the repo conf | `prefix + r` |
 | git | `[include]` of the repo config | next `git` command |
@@ -270,25 +270,55 @@ they do not survive a dead SSD or a stolen laptop, and syncthing is replication
 (it propagates deletions), not a backup either. Off-machine copies are still an
 open item. btrfs scrub runs monthly and smartd watches the NVMe; both only report.
 
-**Terminal colours follow COSMIC** (`modules/home/cosmic-theme-sync.nix`) — flip
-COSMIC between light and dark and the terminal follows, live, in windows already
-open. Two committed palettes are *selected* between, never generated:
-`config/alacritty/colors-{dark,light}.toml` (tokyonight night/day). COSMIC's
-accent colour is applied to the **cursor and selection only** — deliberately not
-to the 16 ANSI colours, which carry meaning (red = error, green = added line)
-that a purple accent would wreck for `git diff` and `ls`.
+**Theming past COSMIC's own apps.** The whole map lives in one place —
+`modules/nixos/cosmic.nix` — because the answer differs per toolkit and is easy
+to break by accident. The native mechanism is the XDG settings portal
+(`org.freedesktop.appearance` → `color-scheme`), which
+`xdg-desktop-portal-cosmic` serves with live `SettingChanged`:
 
-Most of the shell comes along for free, because starship, fzf, eza and
-zsh-syntax-highlighting name no colours of their own — they ask for ANSI slots,
-so repainting the terminal repaints them. `BAT_THEME=ansi` (`config/zsh/rc.zsh`)
-puts bat and delta in the same boat. neovim and btop keep their own themes.
+| App kind | Follows COSMIC unaided? | Why |
+|---|---|---|
+| COSMIC / iced | yes | reads `com.system76.CosmicTheme.*` |
+| GTK4 + libadwaita | yes | reads the portal |
+| **Qt6 ≥ 6.5 (KDE/KF6 apps)** | yes | `libQt6Gui` + the `qxdgdesktopportal` platform theme read the same key |
+| firefox / chromium / electron | yes | read the portal |
+| flatpaks of the above | yes | the sandbox forces portal use |
+| **plain GTK3** | **no** | see below |
+| **Qt5** | no | `libQt5Gui` 5.15 has no portal colour-scheme support |
 
-Run `cosmic-theme-sync` by hand to see what it decided. If it never runs, the
-generated `~/.config/alacritty/colors-active.toml` simply does not exist,
-alacritty skips that import, and you get `colors-dark.toml` — the old static
-behaviour. One caveat: alacritty only live-reloads files it knew about at
-startup, so the very first time that file appears, terminals already open need a
-restart. After that, changes are live.
+Plain GTK3 has no concept of a colour-scheme *preference* at all: `libgdk-3`
+(3.24.52) contains no `org.freedesktop.appearance`, and its only `color-scheme`
+symbol is the deprecated GTK2-era colour-*palette* property. Its sole levers are
+`gtk-theme-name` and `gtk-application-prefer-dark-theme`, reachable only through
+`settings.ini`. GIMP, Meld and `nm-connection-editor` sit in that tier, and no
+configuration can make them native — so `modules/home/gtk-theme-sync.nix` runs a
+`.path` unit on COSMIC's `is_dark` flag and writes that file (`adw-gtk3` /
+`adw-gtk3-dark` for gtk-3.0, prefer-dark only for gtk-4.0), plus the matching
+GSettings keys. The theme itself is installed system-wide in `cosmic.nix`, so the
+greetd-started session finds it on `XDG_DATA_DIRS`.
+
+Run `gtk-theme-sync` by hand to see what it decided — the one line it prints is
+the whole diagnostic. Most GTK apps restyle live; stubborn ones pick it up on
+next launch. Accent colour is deliberately *not* reproduced in GTK: adw-gtk3 has
+no accent hook, and generating a stylesheet from COSMIC's RON theme is exactly
+the fragile-across-epochs machinery this replaced.
+
+**GTK3 flatpaks** need both halves handed into the sandbox, which
+`systemd.services.flatpak-gtk3-theme` (cosmic.nix) does: it installs
+`org.gtk.Gtk3theme.adw-gtk3{,-dark}` — flatpak then mounts the matching one
+automatically — and grants `--filesystem=xdg-config/gtk-{3,4}.0:ro` so GTK inside
+the sandbox can read the `settings.ini` that names it. `flatpak override` is
+per-installation, so a user-level twin unit covers apps `cosmic-store` installed
+into the user installation.
+
+> **Do not set `QT_QPA_PLATFORMTHEME`, `qt.platformTheme` or `qt.style`.** Qt6
+> follows COSMIC *because* it falls through to the portal platform theme; naming
+> `qt5ct`, `kvantum` or `gtk2` displaces that plugin and breaks the one toolkit
+> that needs no help. Leftover `~/.config/Kvantum` and `~/.config/kdeglobals` are
+> inert as long as nothing exports that variable.
+
+The terminal needs none of this — `cosmic-term` is COSMIC-native and follows
+light/dark and the accent by itself.
 
 **Keybinds, theming, wallpaper, displays** — COSMIC Settings, not this repo.
 Keyboard shortcuts are per-user state under `~/.config/cosmic/`; nix does not
