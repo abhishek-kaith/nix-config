@@ -1,7 +1,7 @@
 { pkgs, user, ... }:
 {
-  # Looking after the one disk that holds anything irreplaceable. Imported only by
-  # hosts/t480 — the VMs run on virtual disks that are rebuilt from this repo, so
+  # Looking after the disks that hold anything irreplaceable. Imported by the
+  # laptops (hosts/t480, hosts/t14) — the VMs run on virtual disks that are rebuilt from this repo, so
   # scrubbing them checks nothing and snapshotting them protects nothing.
 
   # ── btrfs scrub ──────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 # nix-config
 
-Flake-based NixOS for one laptop and two dev VMs. Shared concerns live in
+Flake-based NixOS for two laptops and two dev VMs. Shared concerns live in
 `modules/`, per-machine differences in `hosts/`, and the deep "why" of every
 setting is a comment next to it in the module — this file is the map and the
 commands.
@@ -8,6 +8,7 @@ commands.
 | Host   | Platform      | User   |
 |--------|---------------|--------|
 | `t480` | ThinkPad T480 | `k`    |
+| `t14`  | ThinkPad T14 Gen 1 (AMD) | `k` |
 | `vkvm` | QEMU/KVM VM   | `kvm`  |
 | `vbx`  | VirtualBox VM | `vbox` |
 
@@ -27,8 +28,8 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   cosmic.nix              THE desktop (system half): COSMIC from unstable, greeter, GTK glue
   apps.nix                GUI apps COSMIC lacks (mpv, qimgv, gimp, …), flatpak + Flathub
   syncthing.nix           file sync, UI on localhost:8384
-  laptop.nix              t480: fwupd, lid → suspend-then-hibernate, battery thresholds
-  storage.nix             t480: btrfs scrub, smartd, snapper
+  laptop.nix              laptops: fwupd, lid → suspend-then-hibernate, battery thresholds
+  storage.nix             laptops: btrfs scrub, smartd, snapper
 
 modules/home/           USER layer, imported by hosts/<h>/home.nix
   git / zsh / tmux / starship / neovim / scripts / direnv / firefox / easyeffects
@@ -45,7 +46,7 @@ nix-shell -p git --run 'git clone <repo-url> /tmp/nix-config' && cd /tmp/nix-con
 lsblk -d      # new machine: fix `device` in hosts/<h>/disko.nix if it is not /dev/nvme0n1,
               # and regenerate hosts/<h>/hardware-configuration.nix:
               #   nixos-generate-config --no-filesystems --show-hardware-config
-nix --extra-experimental-features 'nix-command flakes' run .#install -- t480
+nix --extra-experimental-features 'nix-command flakes' run .#install -- t480   # or t14
 ```
 
 **This erases the target disk.** It partitions via disko (asks for the LUKS
@@ -59,7 +60,7 @@ home-manager step, ever.
 passwd                                          # bootstrap password is `password`
 git config --global user.name  "Your Name"      # identity is not in the repo
 git config --global user.email "you@example.com"
-systemctl hibernate                             # t480: confirm resume works once
+systemctl hibernate                             # laptops: confirm resume works once
 ```
 Then in KeePassXC → Settings → Browser Integration → enable, to finish the
 Firefox link (the extension itself is force-installed).
@@ -132,10 +133,10 @@ If something outside nix overwrote a managed file, the rebuild moves it aside as
 | Want to…                                  | Read / edit                                   |
 |-------------------------------------------|-----------------------------------------------|
 | change DNS, open a port                    | `modules/nixos/network.nix`                   |
-| re-enable sshd on the laptop (key-only)    | comment in `hosts/t480/default.nix`           |
+| re-enable sshd on a laptop (key-only)      | comment in `hosts/<h>/default.nix`            |
 | battery thresholds, lid behaviour          | `modules/nixos/laptop.nix` (`chargeStart/End`) |
 | firmware updates                           | `fwupdmgr refresh && fwupdmgr get-updates && fwupdmgr update` |
-| undo a file change (t480)                  | `snapper -c home list` / `undochange N..M path` — an undo, **not a backup** |
+| undo a file change (laptops)               | `snapper -c home list` / `undochange N..M path` — an undo, **not a backup** |
 | why GTK3/Qt/flatpak theming works the way it does | `modules/nixos/cosmic.nix` (toolkit map) |
 | bump COSMIC, or a `cosmic-*` attr errors   | the overlay table in `modules/nixos/cosmic.nix` |
 | add a binary cache                         | `nix.settings.extra-substituters` + `extra-trusted-public-keys` in `base.nix` |

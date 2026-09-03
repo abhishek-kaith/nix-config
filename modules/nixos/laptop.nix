@@ -11,11 +11,12 @@ in
 {
   # Everything here is true because this host is a laptop with real hardware to
   # look after: firmware it can be updated from, a lid, and a battery that ages.
-  # The VMs import none of it. Imported only by hosts/t480.
+  # The VMs import none of it. Imported by hosts/t480 and hosts/t14.
   #
   # NOT here: CPU/graphics/thermal tuning, TrackPoint, microcode, `throttled`,
-  # the i915 kernel params. The nixos-hardware lenovo-thinkpad-t480 profile
-  # already sets all of it — verified against the evaluated config, not assumed.
+  # the i915/amdgpu kernel params. The per-host nixos-hardware profile
+  # (lenovo-thinkpad-t480, lenovo-thinkpad-t14-amd-gen1) already sets all of
+  # it — verified against the evaluated config, not assumed.
 
   # ── firmware updates ─────────────────────────────────────────────
   # Without this there is no path to a UEFI/BIOS or Thunderbolt controller update
@@ -26,8 +27,8 @@ in
   services.fwupd.enable = true;
 
   # ── lid close → suspend, then hibernate ──────────────────────────
-  # hosts/t480/disko.nix sizes an 18G swap LV inside LUKS specifically so a full
-  # 16G of RAM can be written out, and sets resumeDevice — but until now nothing
+  # Each laptop's disko.nix sizes a swap LV inside LUKS specifically so its full
+  # RAM can be written out (t480: 18G for 16G, t14: 34G for 32G), and sets resumeDevice — but until now nothing
   # ever invoked hibernation, so that space was reserved for a feature that only
   # fired if you typed `systemctl hibernate`. This wires it to the lid.
   #

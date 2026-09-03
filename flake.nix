@@ -11,7 +11,7 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    # hardware-specific tuning profiles (e.g. ThinkPad T480)
+    # hardware-specific tuning profiles (ThinkPad T480, T14 AMD Gen 1)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -92,7 +92,8 @@
       nixosConfigurations = {
         vkvm = lib.mkHost { hostname = "vkvm"; user = "kvm";  };  # QEMU/KVM VM
         vbx  = lib.mkHost { hostname = "vbx";  user = "vbox"; };  # VirtualBox VM
-        t480 = lib.mkHost { hostname = "t480"; };                 # ThinkPad (user: k)
+        t480 = lib.mkHost { hostname = "t480"; };                 # ThinkPad T480 (user: k)
+        t14  = lib.mkHost { hostname = "t14";  };                 # ThinkPad T14 Gen 1 AMD (user: k)
       };
 
       apps.${system}.install = {
