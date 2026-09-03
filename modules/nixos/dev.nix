@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, pkgs-unstable, inputs, ... }:
 {
   imports = [ inputs.nix-index-database.nixosModules.default ];
 
@@ -34,6 +34,16 @@
   programs.nix-index-database.comma.enable = true; # `,` runs any program, backed by that DB
   programs.command-not-found.enable = false;       # nix-index replaces the (flake-broken) default
 
+  # ── open-file limit ──────────────────────────────────────────────
+  # systemd's default soft limit is 1024 fds per process (hard: 524288). Vite,
+  # esbuild, tsserver and the agents' file watchers each hold one fd per
+  # watched file, and a large monorepo blows past 1024 as EMFILE / "too many
+  # open files" — browsers survive only because they raise their own limit.
+  # This lifts the soft limit to the hard one for every service and, through
+  # user@.service → the user manager → the session, for everything you launch.
+  # inotify watches are a separate limit and already default high (base.nix).
+  systemd.settings.Manager.DefaultLimitNOFILE = "524288:524288";
+
   environment.systemPackages = with pkgs; [
     chromium              # scraper/automation browser (env below points tools at it)
     android-tools scrcpy  # adb + fastboot; scrcpy mirrors/controls a USB-connected phone
@@ -44,9 +54,14 @@
     # (~/.claude, ~/.codex, ~/.config/pi) — nothing to configure here. None of them
     # self-update: the store is read-only, so nixpkgs wraps them with the updater
     # and version-nag checks off. They move with `nix flake update` like the rest.
-    claude-code      # `claude` — Anthropic (unfree; allowUnfree is set in base.nix)
-    codex            # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
-    pi-coding-agent  # `pi`     — model-agnostic, MIT; wrapper bundles fd + ripgrep
+    #
+    # claude + codex come from nixpkgs-unstable: both release weekly, and the
+    # stable branch only backports them every few weeks, so the lag is real —
+    # a whole feature cycle behind on the tool you sit in all day. The same
+    # `pkgs-unstable` that supplies COSMIC (lib/default.nix), so no extra eval.
+    pkgs-unstable.claude-code  # `claude` — Anthropic (unfree; allowUnfree is set in base.nix)
+    pkgs-unstable.codex        # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
+    pi-coding-agent            # `pi`     — model-agnostic, MIT; wrapper bundles fd + ripgrep
 
     # ── runtimes nvim + the agents are built on ────────────────────
     # Not project toolchains — these are what the editor and the agents shell out
