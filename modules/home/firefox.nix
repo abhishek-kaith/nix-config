@@ -22,6 +22,56 @@
         Cryptomining = true;
         Fingerprinting = true;
       };
+
+      # Keep these defaults consistent across Firefox-managed profiles without
+      # making Home Manager own profiles.ini or the individual profile folders.
+      Preferences = {
+        "dom.security.https_only_mode" = {
+          Value = true;
+          Status = "default";
+        };
+        "browser.contentblocking.category" = {
+          Value = "strict";
+          Status = "default";
+        };
+        "toolkit.telemetry.enabled" = {
+          Value = false;
+          Status = "default";
+        };
+        "datareporting.healthreport.uploadEnabled" = {
+          Value = false;
+          Status = "default";
+        };
+        "extensions.pocket.enabled" = {
+          Value = false;
+          Status = "default";
+        };
+        "browser.newtabpage.activity-stream.showSponsored" = {
+          Value = false;
+          Status = "default";
+        };
+        "browser.newtabpage.activity-stream.showSponsoredTopSites" = {
+          Value = false;
+          Status = "default";
+        };
+        "browser.aboutConfig.showWarning" = {
+          Value = false;
+          Status = "default";
+        };
+        "browser.urlbar.suggest.quicksuggest.sponsored" = {
+          Value = false;
+          Status = "default";
+        };
+        "browser.urlbar.suggest.quicksuggest.nonsponsored" = {
+          Value = false;
+          Status = "default";
+        };
+        "browser.discovery.enabled" = {
+          Value = false;
+          Status = "default";
+        };
+      };
+
       # the system already does DNS-over-TLS via systemd-resolved — don't double up
       DNSOverHTTPS.Enabled = false;
       ExtensionSettings = {
@@ -40,27 +90,6 @@
       # with the KeePassXC one.
       PasswordManagerEnabled = false;
       OfferToSaveLogins = false;
-    };
-
-    profiles.default = {
-      id = 0;
-      isDefault = true;
-      settings = {
-        "dom.security.https_only_mode" = true;          # HTTPS-only
-        "browser.contentblocking.category" = "strict";  # strict tracking protection
-        "toolkit.telemetry.enabled" = false;
-        "datareporting.healthreport.uploadEnabled" = false;
-        "extensions.pocket.enabled" = false;
-        "browser.newtabpage.activity-stream.showSponsored" = false;
-        "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
-        "browser.aboutConfig.showWarning" = false;
-
-        # the newtab prefs above only cover the new-tab tiles — the address bar is a
-        # separate surface that also ships sponsored/"Firefox Suggest" results
-        "browser.urlbar.suggest.quicksuggest.sponsored" = false;
-        "browser.urlbar.suggest.quicksuggest.nonsponsored" = false;
-        "browser.discovery.enabled" = false;   # "personalised extension recommendations"
-      };
     };
   };
 }
