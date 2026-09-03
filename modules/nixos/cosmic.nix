@@ -109,7 +109,7 @@ in
   #   Qt6 (>= 6.5)             libQt6Gui and the qxdgdesktopportal platform theme
   #                            both read the same key — this is every current
   #                            KDE/KF6 app, keepassxc and qimgv included
-  #   firefox / chromium /     read the portal
+  #   Brave Origin / Chromium  read the portal
   #   electron
   #   flatpaks of the above    the sandbox forces portal use
   #

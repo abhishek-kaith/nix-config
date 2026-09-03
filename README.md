@@ -32,7 +32,7 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   storage.nix             laptops: btrfs scrub, smartd, snapper
 
 modules/home/           USER layer, imported by hosts/<h>/home.nix
-  git / zsh / tmux / starship / neovim / scripts / direnv / firefox / easyeffects
+  git / zsh / tmux / starship / neovim / scripts / direnv / Brave Origin / easyeffects
   xdg.nix                 user dirs (+ ~/Projects/{work,personal}), DE-agnostic mime defaults
   cosmic.nix              THE desktop (user half): COSMIC mime defaults, GTK3 light/dark sync
 
@@ -57,13 +57,13 @@ home-manager step, ever.
 
 **First boot**
 ```sh
-passwd                                                       # bootstrap password is `password`
 git config --file ~/.config/git/local user.name  "Your Name" # identity stays out of the repo
 git config --file ~/.config/git/local user.email "you@example.com"
 systemctl hibernate                                          # laptops: confirm resume works once
 ```
-Then in KeePassXC → Settings → Browser Integration → enable, to finish the
-Firefox link (the extension itself is force-installed).
+The installer asks for the normal user's login/sudo password after installing;
+the password is not declared in Nix or stored in the repository. Configure
+Brave Origin, its extensions, and KeePassXC browser integration in their UIs.
 
 ## Day-to-day
 

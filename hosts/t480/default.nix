@@ -31,7 +31,6 @@
     isNormalUser = true;
     extraGroups  = [ "wheel" "networkmanager" ];
     shell        = pkgs.zsh;
-    initialPassword = "password"; # bootstrap login/sudo; change with `passwd` after first boot
   };
 
   security.sudo.wheelNeedsPassword = true;
@@ -39,9 +38,9 @@
   # ── no sshd ──────────────────────────────────────────────────────
   # Deliberately absent, where the VMs do run one. This machine joins networks it
   # does not control (cafe, hotel, conference wifi), and openFirewall puts :22 on
-  # every interface — so an sshd with PasswordAuthentication and a `wheel` account
-  # still on its bootstrap password is a guessable path to root from the same
-  # subnet. Nothing here connects *in*; outbound ssh needs no daemon.
+  # every interface — so an sshd with PasswordAuthentication gives the same
+  # subnet a password-guessing path to a `wheel` account. Nothing here connects
+  # *in*; outbound ssh needs no daemon.
   #
   # To turn it back on, do it key-only — never with the password path open:
   #   users.users.${user}.openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAA..." ];

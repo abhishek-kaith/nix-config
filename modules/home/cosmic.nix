@@ -143,7 +143,7 @@ in
   };
 
   # ── 1. mime defaults for COSMIC's own apps ───────────────────────
-  # The DE-agnostic handlers (mpv, qimgv, firefox) are in modules/home/xdg.nix;
+  # The DE-agnostic handlers (mpv, qimgv, Brave Origin) are in modules/home/xdg.nix;
   # these are the ones that would change with the desktop, so they live with it.
   # defaultApplications merges across modules, so the two lists become one.
   xdg.mimeApps.defaultApplications = {

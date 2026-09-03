@@ -1,4 +1,4 @@
-{ pkgs, user, ... }:
+{ pkgs, ... }:
 {
   # ── locale / time ────────────────────────────────────────────────
   time.timeZone      = "Asia/Kolkata";
@@ -64,7 +64,9 @@
   nix = {
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
-      trusted-users         = [ "root" user ];
+      # Ordinary users can still build and evaluate flakes. Daemon-level trust
+      # stays root-only; administrative rebuilds already run through sudo.
+      trusted-users = [ "root" ];
       # Per-host build parallelism is NOT capped here — core counts differ between
       # the laptop and the VMs. If a big rebuild ever starves the machine, set
       # `nix.settings.max-jobs` / `cores` in that host's default.nix.

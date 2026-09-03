@@ -34,7 +34,6 @@
     isNormalUser = true;
     extraGroups  = [ "wheel" "networkmanager" ];
     shell        = pkgs.zsh;
-    initialPassword = "password"; # bootstrap login/sudo; change with `passwd` after first boot
   };
 
   security.sudo.wheelNeedsPassword = true;

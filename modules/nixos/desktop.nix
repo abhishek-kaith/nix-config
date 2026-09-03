@@ -40,13 +40,11 @@
   # session needs, not a COSMIC detail — a DE swap should not silently take the
   # Secret Service or the polkit agent with it.
   #
-  # Correction worth keeping: this used to claim the keyring is where Firefox
-  # stores its credentials. It is not. Firefox keeps logins in logins.json +
-  # key4.db inside the profile and never touches the Secret Service — and
-  # modules/home/firefox.nix disables its password manager outright anyway, since
-  # KeePassXC is the store. The only real consumer on this machine is chromium
-  # (dev.nix), which uses it to encrypt its cookie store and falls back to
-  # plaintext without it; gvfs mounts and future flatpak apps may also want it.
+  # Chromium-family browsers use this to encrypt their cookie store and fall back
+  # to plaintext without it. KeePassXC remains available as the credential store,
+  # but its browser integration and the browser's own password-manager setting are
+  # deliberately configured in their UIs. gvfs mounts and future flatpak apps may
+  # also use the Secret Service.
   security.polkit.enable = true;
   programs.dconf.enable = true;                # gsettings/dconf backend for GTK apps
   services.gnome.gnome-keyring.enable = true;  # Secret Service — see the note above

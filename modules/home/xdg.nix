@@ -51,8 +51,8 @@
       "image/avif"       = "qimgv.desktop";   # what modern cameras and the web emit
       "image/heif"       = "qimgv.desktop";   # iPhone stills
       # SVG is markup, not a raster: qimgv renders it poorly or not at all, and
-      # firefox is the best renderer already on the machine.
-      "image/svg+xml"    = "firefox.desktop";
+      # the browser is the best renderer already on the machine.
+      "image/svg+xml"    = "brave-origin.desktop";
 
       "video/mp4"        = "mpv.desktop";
       "video/x-matroska" = "mpv.desktop";
@@ -70,9 +70,9 @@
       "audio/opus"       = "mpv.desktop";
       "audio/mp4"        = "mpv.desktop";     # .m4a
       "audio/aac"        = "mpv.desktop";
-      "text/html"              = "firefox.desktop";
-      "x-scheme-handler/http"  = "firefox.desktop";
-      "x-scheme-handler/https" = "firefox.desktop";
+      "text/html"              = "brave-origin.desktop";
+      "x-scheme-handler/http"  = "brave-origin.desktop";
+      "x-scheme-handler/https" = "brave-origin.desktop";
     };
   };
 }

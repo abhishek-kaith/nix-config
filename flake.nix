@@ -53,8 +53,8 @@
 
           echo ">>> Installing NixOS (TMPDIR on disk to avoid live-ISO RAM exhaustion)"
           mkdir -p /mnt/tmp
-          # --no-root-passwd: skip the interactive root-password prompt; the
-          # autologin user sets its own password on first boot (see README)
+          # Keep root locked. The normal user's password is requested below and
+          # is never stored in this repository or the Nix store.
           TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt --no-root-passwd
 
           # Seed this repo into the new system so the editable configs resolve on
@@ -83,8 +83,15 @@
             echo "warning: no normal user in /mnt/etc/passwd — skipping repo seed" >&2
           fi
 
-          [ -n "$username" ] || username="<user>"
-          echo ">>> Done. Set a password on first boot: passwd $username"
+          if [ -n "$username" ]; then
+            echo ">>> Set the login/sudo password for '$username'"
+            nixos-enter --root /mnt -c "passwd $username"
+          else
+            echo "error: no normal user found; cannot set a login password" >&2
+            exit 1
+          fi
+
+          echo ">>> Done. Reboot into the installed system."
         '';
       };
     in

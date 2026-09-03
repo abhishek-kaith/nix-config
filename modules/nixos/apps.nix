@@ -26,13 +26,13 @@
                        # `satty` below is for screenshots specifically — reach for
                        # that first, it is a far shorter path for an annotation.
     libreoffice-fresh  # .docx/.xlsx/.pptx + ODF. Nothing else here opens them —
-                       # firefox will not, and the PDF readers only read PDF. No
+                       # the browser will not, and the PDF readers only read PDF. No
                        # mime mappings for it in home/xdg.nix on purpose: it is the
                        # only handler for those types, so it wins the default by
                        # itself, and naming its .desktop ids wrongly would silently
                        # map them to nothing.
     pavucontrol        # GUI audio mixer (per-app volume) — finer-grained than the applet
-    keepassxc          # password manager (Firefox integration via native messaging)
+    keepassxc          # password manager; browser integration is configured in the app
 
     # ── screen capture ─────────────────────────────────────────────
     # cosmic-screenshot takes the picture and stops there — epoch 1 has no
