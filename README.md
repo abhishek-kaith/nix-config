@@ -57,10 +57,10 @@ home-manager step, ever.
 
 **First boot**
 ```sh
-passwd                                          # bootstrap password is `password`
-git config --global user.name  "Your Name"      # identity is not in the repo
-git config --global user.email "you@example.com"
-systemctl hibernate                             # laptops: confirm resume works once
+passwd                                                       # bootstrap password is `password`
+git config --file ~/.config/git/local user.name  "Your Name" # identity stays out of the repo
+git config --file ~/.config/git/local user.email "you@example.com"
+systemctl hibernate                                          # laptops: confirm resume works once
 ```
 Then in KeePassXC → Settings → Browser Integration → enable, to finish the
 Firefox link (the extension itself is force-installed).

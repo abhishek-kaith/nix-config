@@ -2,7 +2,11 @@
 {
   programs.git = {
     enable = true;
-    # real settings live in the editable repo file; HM only adds an [include]
-    includes = [ { path = "${repoDir}/config/git/config"; } ];
+    # Shared settings live in the editable repo file. Machine-local identity
+    # lives outside the public repo and remains writable without a rebuild.
+    includes = [
+      { path = "${repoDir}/config/git/config"; }
+      { path = "~/.config/git/local"; }
+    ];
   };
 }
