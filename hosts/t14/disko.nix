@@ -30,6 +30,7 @@
               type       = "filesystem";
               format     = "vfat";
               mountpoint = "/boot";
+              mountOptions = [ "umask=0077" ]; # protect systemd-boot's random seed
             };
           };
 

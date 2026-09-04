@@ -164,20 +164,15 @@ in
   # every graphical host imports) so this file stays importable on its own.
   systemd.services.flatpak-gtk3-theme = lib.mkIf config.services.flatpak.enable {
     description = "Install the adw-gtk3 flatpak theme and grant GTK config access";
-    # flatpak-flathub-remote (apps.nix) registers the remote this installs from.
-    # `wants` + `after`, deliberately not `requires`: with wait-online off
-    # (network.nix) the remote unit can fail on a first boot and then retry itself,
-    # and a Requires= would have marked this unit failed at that first attempt
-    # with no way to be pulled back in when the remote finally lands. Instead this
-    # unit retries on its own the same way — `flatpak install` exits non-zero with
-    # no remote or no network, and 30s later it tries again.
-    after    = [ "network-online.target" "flatpak-flathub-remote.service" ];
-    wants    = [ "network-online.target" "flatpak-flathub-remote.service" ];
+    # Flathub is user-managed: skip its theme extensions when that remote is not
+    # configured. If it is configured but the network is late, retry the install.
+    after    = [ "network-online.target" ];
+    wants    = [ "network-online.target" ];
     wantedBy = [ "multi-user.target" ];
     startLimitIntervalSec = 0;
     # config.services.flatpak.package, not pkgs.flatpak — same reasoning as the
-    # remote unit in apps.nix: it cannot drift from the version actually running.
-    path = [ config.services.flatpak.package ];
+    # running service, so it cannot drift from the version actually in use.
+    path = [ config.services.flatpak.package pkgs.gnugrep ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -185,15 +180,15 @@ in
       RestartSec = "30s";
     };
     script = ''
-      # Checked by hand rather than with an --if-not-exists style flag, because
-      # `flatpak install` on an already-installed ref exits non-zero — which
-      # would fail this unit on every boot after the first.
-      for theme in adw-gtk3 adw-gtk3-dark; do
-        ref="org.gtk.Gtk3theme.$theme"
-        if ! flatpak info "$ref" >/dev/null 2>&1; then
-          flatpak install --system --noninteractive flathub "$ref"
-        fi
-      done
+      if flatpak remotes --system --columns=name | grep -Fxq flathub; then
+        # `flatpak install` on an existing ref exits non-zero, so check first.
+        for theme in adw-gtk3 adw-gtk3-dark; do
+          ref="org.gtk.Gtk3theme.$theme"
+          if ! flatpak info "$ref" >/dev/null 2>&1; then
+            flatpak install --system --noninteractive flathub "$ref"
+          fi
+        done
+      fi
 
       # No app argument = the global override for this installation. Rewrites the
       # same two keys every time, so running it on each boot is a no-op.

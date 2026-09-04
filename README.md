@@ -27,7 +27,7 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   shell.nix               zsh, fzf, zoxide, starship
   desktop.nix             DE-agnostic floor: audio, fonts, polkit, keyring
   cosmic.nix              THE desktop (system half): COSMIC from unstable, greeter, GTK glue
-  apps.nix                GUI apps COSMIC lacks (mpv, qimgv, gimp, …), flatpak + Flathub
+  apps.nix                GUI apps COSMIC lacks (mpv, qimgv, gimp, …), flatpak support
   syncthing.nix           file sync, UI on localhost:8384
   laptop.nix              laptops: fwupd, lid → suspend-then-hibernate, battery thresholds
   storage.nix             laptops: btrfs scrub, smartd, snapper
@@ -60,6 +60,7 @@ home-manager step, ever.
 ```sh
 git config --file ~/.config/git/local user.name  "Your Name" # identity stays out of the repo
 git config --file ~/.config/git/local user.email "you@example.com"
+sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo # optional, once
 systemctl hibernate                                          # laptops: confirm resume works once
 ```
 The installer asks for the normal user's login/sudo password after installing;

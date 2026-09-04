@@ -5,9 +5,9 @@
   # Do not hold the boot for the network. NetworkManager-wait-online blocks
   # network-online.target (and everything ordered after it) until a connection
   # is up — on wifi that is routinely 5-30s of a black screen for nothing the
-  # desktop needs. The only units here that order after network-online are the
-  # flatpak ones in apps.nix / cosmic.nix, and they retry themselves every 30s
-  # until the network is actually there. Nothing else waits for a link.
+  # desktop needs. The optional Flatpak theme job is the only unit here ordered
+  # after network-online; it skips an absent Flathub remote and retries transient
+  # install failures itself. Nothing else waits for a link.
   systemd.services.NetworkManager-wait-online.enable = false;
 
   # ── DNS: Quad9 primary, Cloudflare fallback, encrypted where possible ──

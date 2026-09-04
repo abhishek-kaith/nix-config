@@ -36,14 +36,16 @@
   security.sudo.wheelNeedsPassword = true;
 
   # ── T14 Gen 1 (AMD) quirks ───────────────────────────────────────
-  # Suspend: this firmware offers both s2idle and deep (S3) — /sys/power/mem_sleep
-  # reads `s2idle [deep]` on this machine — and the kernel's default pick is
-  # s2idle, which on Renoir runs warm and drains in a closed bag. Deep is what
-  # the previous Arch install used on this exact hardware (mem_sleep_default=deep
-  # on its cmdline) and it resumed reliably. If deep ever stops being offered,
-  # UEFI setup → Config → Power → Sleep State → "Linux" brings it back.
+  # Suspend: UEFI setup → Config → Power → Sleep State must stay on "Linux" so
+  # the firmware exposes S3. /sys/power/mem_sleep then reads `s2idle [deep]`;
+  # select deep explicitly because Renoir's s2idle runs warm in a closed bag.
+  # A real S3 suspend/resume cycle has been verified on this machine.
   boot.kernelParams = [ "mem_sleep_default=deep" ];
-  #
+
+  # Activate ALSA's state service and sound-card restore rule for the codec's
+  # microphone-mute LED. PipeWire remains the sound server.
+  hardware.alsa.enablePersistence = true;
+
   # Fingerprint reader (Synaptics 06cb:00bd, "Prometheus"): supported by
   # libfprint, but it needs the LVFS firmware first (`fwupdmgr update` — fwupd
   # comes from laptop.nix). Not enabled here: fprintd's PAM hook makes every

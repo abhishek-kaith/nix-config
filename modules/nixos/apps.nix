@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ pkgs, ... }:
 {
   # End-user graphical applications that the desktop environment does NOT already
   # ship. The graphical infrastructure (audio, fonts, keyring, polkit) is
@@ -54,46 +54,7 @@
     binfmt = true;   # execute .AppImage files directly (./foo.AppImage)
   };
   # ── flatpak ──────────────────────────────────────────────────────
-  # Two jobs, and the second is not obvious: it lets you install apps that are not
-  # in nixpkgs (through the xdg portals COSMIC already sets up), AND it is the gate
-  # that makes the COSMIC module ship `cosmic-store` — upstream only adds the store
-  # when `services.flatpak.enable` is set. Turning this off silently removes the
-  # Store from the machine.
+  # Also makes the COSMIC module ship `cosmic-store`; upstream only adds the Store
+  # when Flatpak is enabled. Remotes are persistent state and are user-managed.
   services.flatpak.enable = true;
-
-  # Enabling flatpak gives you the machinery but NO source of apps: a fresh install
-  # comes up with zero remotes, so the Store shows an empty catalogue and every
-  # `flatpak install` fails to resolve. NixOS has no option for remotes, so this
-  # adds Flathub itself — the same `flatpak remote-add` you would otherwise have to
-  # remember to type by hand after every reinstall.
-  systemd.services.flatpak-flathub-remote = {
-    description = "Register the Flathub remote with flatpak";
-    # Needs the network only on the FIRST successful run: --if-not-exists checks
-    # for the remote before fetching anything, so once Flathub is registered this
-    # is a no-op that never touches the network again.
-    #
-    # network-online.target is NOT a guarantee of a link here: network.nix turns
-    # NetworkManager-wait-online off so the boot does not stall on wifi, which
-    # means this can (and on a fresh install's first boot, will) run before there
-    # is a connection. So instead of failing once and waiting for the next boot,
-    # it retries every 30s until it succeeds — Restart= on a oneshot is allowed
-    # for exactly this, and RemainAfterExit stops the retries once it has worked.
-    after    = [ "network-online.target" "flatpak-system-helper.service" ];
-    wants    = [ "network-online.target" ];
-    wantedBy = [ "multi-user.target" ];
-    startLimitIntervalSec = 0;   # never trip the 5-starts-in-10s rate limit
-    # config.services.flatpak.package, not pkgs.flatpak, so this cannot drift from
-    # whatever version the module above is actually running.
-    path = [ config.services.flatpak.package ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      Restart = "on-failure";
-      RestartSec = "30s";
-    };
-    script = ''
-      flatpak remote-add --if-not-exists flathub \
-        https://flathub.org/repo/flathub.flatpakrepo
-    '';
-  };
 }

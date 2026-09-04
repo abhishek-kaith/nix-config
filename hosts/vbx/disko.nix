@@ -17,6 +17,7 @@
             type       = "filesystem";
             format     = "vfat";     # FAT32 — UEFI can only read this
             mountpoint = "/boot";
+            mountOptions = [ "umask=0077" ]; # protect systemd-boot's random seed
           };
         };
 
