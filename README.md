@@ -17,12 +17,13 @@ commands.
 ```
 flake.nix               inputs, host list, the `install` app
 lib/default.nix         mkHost — wires home-manager + specialArgs (pkgs-unstable, repoDir)
+lib/caches.nix          extra binary caches — read by dev.nix AND the installer
 config/                 native dotfiles (nvim, tmux, zsh, git, starship, scripts) — edited live
 
 modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   base.nix                nix settings/gc, locale, console, boot, zram, earlyoom, sysctl
   network.nix             NetworkManager, DNS (Quad9 + Cloudflare, DoT), firewall
-  packages.nix / dev.nix  CLI toolbox / nix-ld, podman, AI agents, runtimes
+  packages.nix / dev.nix  CLI toolbox / nix-ld, podman, AI agents (llm-agents input), runtimes
   shell.nix               zsh, fzf, zoxide, starship
   desktop.nix             DE-agnostic floor: audio, fonts, polkit, keyring
   cosmic.nix              THE desktop (system half): COSMIC from unstable, greeter, GTK glue
@@ -74,6 +75,7 @@ sudo nixos-rebuild --rollback                          # or hold Space at boot f
 
 nix flake update                     # all inputs
 nix flake update nixpkgs-unstable    # just COSMIC's source
+nix flake update llm-agents          # just claude/codex/pi
 nix flake check                      # evaluate every host — run before switch
 nix-collect-garbage -d
 
@@ -139,6 +141,8 @@ If something outside nix overwrote a managed file, the rebuild moves it aside as
 | undo a file change (laptops)               | `snapper -c home list` / `undochange N..M path` — an undo, **not a backup** |
 | why GTK3/Qt/flatpak theming works the way it does | `modules/nixos/cosmic.nix` (toolkit map) |
 | bump COSMIC, or a `cosmic-*` attr errors   | the overlay table in `modules/nixos/cosmic.nix` |
-| add a binary cache                         | `nix.settings.extra-substituters` + `extra-trusted-public-keys` in `base.nix` |
+| bump claude / codex / pi                   | `nix flake update llm-agents` — they come from that input, not nixpkgs (`dev.nix`) |
+| add a binary cache                         | one entry in `lib/caches.nix` — `dev.nix` and the installer both read it |
+| agents built from source on rebuild        | the cache key rotated or the URL died — check `lib/caches.nix` against the upstream flake's `nixConfig` |
 | nix builds hogging the desktop             | `nix.daemon*Sched*` in `base.nix` (already batch/low-I/O); cap with `max-jobs` per host |
 | a runaway agent/browser ate all the RAM    | `journalctl -u earlyoom` says what it killed and why |

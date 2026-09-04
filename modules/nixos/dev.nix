@@ -1,4 +1,10 @@
-{ pkgs, pkgs-unstable, inputs, ... }:
+{ pkgs, inputs, ... }:
+let
+  # The AI coding agents, from the llm-agents flake input instead of nixpkgs —
+  # rationale at the package list below.
+  agents = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
+  caches = import ../../lib/caches.nix;
+in
 {
   imports = [ inputs.nix-index-database.nixosModules.default ];
 
@@ -44,6 +50,22 @@
   # inotify watches are a separate limit and already default high (base.nix).
   systemd.settings.Manager.DefaultLimitNOFILE = "524288:524288";
 
+  # ── binary cache for the AI agents ───────────────────────────────
+  # llm-agents.nix builds against its own nixpkgs pin, not this system's, so
+  # cache.nixos.org has none of its outputs — without this an agent bump means
+  # ~560 MB of build inputs and a local build instead of a plain download.
+  # `extra-` appends to the defaults, so cache.nixos.org is still consulted
+  # first for everything else. A path that is unsigned, or signed by a key not
+  # listed here, is rejected and built from source — a rotated or dead key
+  # costs time, never correctness.
+  #
+  # The pair lives in lib/caches.nix because the installer needs the same one:
+  # the live ISO's daemon cannot read the config it is installing.
+  nix.settings = {
+    extra-substituters        = caches.urls;
+    extra-trusted-public-keys = caches.keys;
+  };
+
   environment.systemPackages = with pkgs; [
     chromium              # scraper/automation browser (env below points tools at it)
     android-tools scrcpy  # adb + fastboot; scrcpy mirrors/controls a USB-connected phone
@@ -52,16 +74,23 @@
     # ── AI coding agents ───────────────────────────────────────────
     # Each authenticates itself on first run and keeps its own state in $HOME
     # (~/.claude, ~/.codex, ~/.config/pi) — nothing to configure here. None of them
-    # self-update: the store is read-only, so nixpkgs wraps them with the updater
-    # and version-nag checks off. They move with `nix flake update` like the rest.
+    # self-update: the store is read-only, so they are wrapped with the updater
+    # and version-nag checks off. They move with `nix flake update`.
     #
-    # claude + codex come from nixpkgs-unstable: both release weekly, and the
-    # stable branch only backports them every few weeks, so the lag is real —
-    # a whole feature cycle behind on the tool you sit in all day. The same
-    # `pkgs-unstable` that supplies COSMIC (lib/default.nix), so no extra eval.
-    pkgs-unstable.claude-code  # `claude` — Anthropic (unfree; allowUnfree is set in base.nix)
-    pkgs-unstable.codex        # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
-    pi-coding-agent            # `pi`     — model-agnostic, MIT; wrapper bundles fd + ripgrep
+    # These come from the `llm-agents` input, not nixpkgs. nixpkgs is not slow at
+    # packaging them, but the nixos-unstable *channel* only advances every 1-3
+    # days behind Hydra, and that lag compounds with the packaging one: on the day
+    # this was wired up nixpkgs was 3 claude releases and 2 codex minors behind
+    # upstream (and pi was 9 minors behind, still coming from stable). llm-agents
+    # tracks releases within hours and ships prebuilt binaries from
+    # cache.numtide.com (substituter above).
+    #
+    # The other half of the reason is decoupling: `nix flake update llm-agents`
+    # bumps the agents on their own. Taking them from `pkgs-unstable` meant every
+    # agent bump also dragged in a new COSMIC (modules/nixos/cosmic.nix).
+    agents.claude-code  # `claude` — Anthropic (unfree)
+    agents.codex        # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
+    agents.pi           # `pi`     — model-agnostic, MIT
 
     # ── runtimes nvim + the agents are built on ────────────────────
     # Not project toolchains — these are what the editor and the agents shell out

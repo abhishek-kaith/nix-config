@@ -19,6 +19,11 @@
     # the DB refreshes whenever you `nix flake update`
     nix-index-database.url = "github:nix-community/nix-index-database";
     nix-index-database.inputs.nixpkgs.follows = "nixpkgs";
+
+    # AI coding agents (claude, codex, pi) — see modules/nixos/dev.nix.
+    # Deliberately NOT `follows = "nixpkgs"`: numtide builds its cache against
+    # the pin below, and overriding it turns every agent into a local build.
+    llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
   # inputs@ binds ALL inputs as a single attribute set called `inputs`
@@ -27,6 +32,7 @@
     let
       system = "x86_64-linux";
       lib    = import ./lib { inherit nixpkgs nixpkgs-unstable inputs; };
+      caches = import ./lib/caches.nix;   # shared with modules/nixos/dev.nix
       pkgs   = import nixpkgs { inherit system; };
 
       # One-command installer: partition+mount via disko, then nixos-install.
@@ -55,7 +61,13 @@
           mkdir -p /mnt/tmp
           # Keep root locked. The normal user's password is requested below and
           # is never stored in this repository or the Nix store.
-          TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt --no-root-passwd
+          # The extra caches are passed explicitly: nix.settings only takes effect
+          # once the installed system boots, so without these flags the ISO would
+          # fetch build inputs and compile the AI agents (modules/nixos/dev.nix)
+          # locally, which is the slowest part of a fresh install by a wide margin.
+          TMPDIR=/mnt/tmp nixos-install --flake ".#$host" --root /mnt --no-root-passwd \
+            --option extra-substituters "${caches.urlsArg}" \
+            --option extra-trusted-public-keys "${caches.keysArg}"
 
           # Seed this repo into the new system so the editable configs resolve on
           # first boot. Everything hangs off repoDir (/home/<user>/nix-config):
