@@ -91,6 +91,7 @@ in
     agents.claude-code  # `claude` — Anthropic (unfree)
     agents.codex        # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
     agents.pi           # `pi`     — model-agnostic, MIT
+    agents.opencode     #
 
     # ── runtimes nvim + the agents are built on ────────────────────
     # Not project toolchains — these are what the editor and the agents shell out
