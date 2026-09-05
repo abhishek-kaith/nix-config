@@ -71,7 +71,8 @@ Brave Origin, its extensions, and KeePassXC browser integration in their UIs.
 
 ```sh
 sudo nixos-rebuild switch --flake ~/nix-config#t480   # apply (use the host's own attr)
-nixos-rebuild build --flake ~/nix-config#t480 && nvd diff /run/current-system result
+nixos-rebuild build --flake ~/nix-config#t480 \
+  && nix store diff-closures /run/current-system ./result   # what changed, package by package
 sudo nixos-rebuild --rollback                          # or hold Space at boot for the menu
 
 nix flake update                     # all inputs

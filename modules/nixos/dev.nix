@@ -15,8 +15,8 @@ in
   # Project toolchains (a pinned node, a go/rust/java version, project deps) go in
   # per-project devShells via direnv — NOT here. What lives here is what nvim and
   # the agents need in order to start working at all, plus the global agent
-  # binaries themselves. For genuine one-offs, reach for `,` (see nix ergonomics
-  # below) instead of adding a package.
+  # binaries themselves. For genuine one-offs, reach for
+  # `nix shell nixpkgs#<pkg>` instead of adding a package.
 
   # ── nix-ld: run prebuilt, dynamically-linked binaries on NixOS ────
   # Without this, non-Nix binaries fail with "No such file or directory" even
@@ -36,8 +36,10 @@ in
   # nix-index-database.nixosModules.default (imported above) feeds nix-index a
   # prebuilt, daily-updated DB, so `nix-index` never runs locally — it refreshes
   # with `nix flake update`.
+  # comma (`,`) is deliberately NOT enabled: `nix shell nixpkgs#<pkg>` is the one
+  # command it wrapped, and nix-index is wanted here for nix-locate and the
+  # command-not-found hook either way.
   programs.nix-index.enable = true;                # nix-locate + command-not-found hook
-  programs.nix-index-database.comma.enable = true; # `,` runs any program, backed by that DB
   programs.command-not-found.enable = false;       # nix-index replaces the (flake-broken) default
 
   # ── open-file limit ──────────────────────────────────────────────

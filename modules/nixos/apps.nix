@@ -18,6 +18,11 @@
     mpv                # video/audio player — ffmpeg bundles the codecs; HW-accel on t480
                        # (cosmic-player is excluded in cosmic.nix in favour of this)
     yt-dlp             # stream/download from URLs (`mpv <url>`)
+    losange            # Stremio client: browse the catalogue, hand playback to an
+                       # addon's stream. GTK4/libadwaita, so it follows COSMIC's
+                       # light/dark through the portal on its own — nothing for
+                       # gtk-theme-sync (modules/home/cosmic.nix) to do. Account
+                       # and addons are its own state, configured in the app.
 
       # ── images / documents ─────────────────────────────────────────
     qimgv              # fast image viewer — COSMIC epoch 1 has no image viewer

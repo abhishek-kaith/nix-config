@@ -89,7 +89,9 @@
     sshfs                   # mount a remote dir over ssh
 
     # ── nix workflow ──────────────────────────────────────────────
-    nh nvd                  # nicer rebuild wrapper / diff generations
+    # Deliberately no rebuild wrapper (nh) and no generation-differ (nvd): plain
+    # `nixos-rebuild` and the built-in `nix store diff-closures` do both jobs, and
+    # neither is another moving part to keep current.
     nix-tree                # explore a closure's dependencies
     nil nixfmt              # Nix LSP + formatter (for editing this repo)
     tealdeer                # `tldr` — quick command examples
