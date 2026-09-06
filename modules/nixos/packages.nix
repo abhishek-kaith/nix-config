@@ -70,6 +70,9 @@
     # ── HTTP / API ────────────────────────────────────────────────
     xh                      # friendly HTTP client (httpie-compatible, fast)
     grpcurl websocat        # gRPC / websocket poking
+    cloudflared             # Cloudflare Tunnel client: `cloudflared tunnel --url localhost:3000`
+                            # gives a local port a public https URL (quick tunnels need
+                            # no account; named tunnels: `cloudflared tunnel login`)
 
     # ── data / json ───────────────────────────────────────────────
     jq yq
