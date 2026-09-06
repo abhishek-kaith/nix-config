@@ -100,6 +100,7 @@ in
     # to at runtime, so they can't live in a devShell (nvim and the agents start
     # outside any project dir). Pin real versions per project in a devShell; these
     # are only ever the fallback.
+    pnpm
     nodejs   # mason installs ts_ls/tailwindcss via npm; agents run MCP servers via npx
     gcc      # `cc` — nvim-treesitter compiles each parser from source; also node-gyp
     uv       # python without a system python: `uv run x.py`, `uvx ruff` — brings
