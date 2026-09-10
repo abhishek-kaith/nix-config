@@ -189,6 +189,7 @@ The shared config is in the repo; your name and email live in
 | `delta` | Syntax-highlighted diffs — follows `BAT_THEME`, so it matches the terminal. |
 | `difft <a> <b>` | **difftastic** — structural diff. Shows that you moved a function rather than 200 changed lines. |
 | `gh pr create`, `gh issue list` | GitHub from the terminal: PRs, issues, gists, releases. |
+| `shopify` | Shopify CLI (themes, apps, storefronts). From nixpkgs-unstable — the stable channel is a major version behind and Shopify retires old CLI majors. `shopify auth login` once. |
 | `git lfs` | Large-file storage. |
 | `tokei` | Count lines of code by language. |
 
@@ -249,7 +250,6 @@ The shared config is in the repo; your name and email live in
 | Command | What it does |
 |---|---|
 | `btop` | The one to open first — CPU, memory, disks, network, processes, all in one. |
-| `htop` | The familiar process view when btop is more than you want. |
 | `procs` | `ps` with a tree view, colour and search. |
 | `iotop` | Which process is actually hitting the disk. |
 | `bandwhich` | Live bandwidth **per process** — the one that answers "what is uploading right now". |
@@ -257,7 +257,7 @@ The shared config is in the repo; your name and email live in
 | `ncdu` | Interactive disk usage — walk into the directory that is eating the SSD and delete from inside it. |
 | `sensors` | Temperatures and fan speeds (**lm_sensors**). |
 | `acpi -V` | Battery percentage, charge state, thermal zones. |
-| `fastfetch`, `pfetch` | System summary. fastfetch is the detailed one. |
+| `fastfetch` | System summary — hardware, kernel, desktop, packages. |
 | `lspci`, `lsusb` | What hardware is actually attached (**pciutils**, **usbutils**). |
 | `lsof`, `pstree`, `killall` | Open files; process tree; kill by name. |
 | `file <path>` | What this actually is, regardless of extension. |
@@ -271,9 +271,11 @@ The shared config is in the repo; your name and email live in
 
 *Defined in `modules/nixos/packages.nix`, `modules/nixos/network.nix`.*
 
-NetworkManager with systemd-resolved. DNS goes to Quad9 over TLS
-opportunistically, Cloudflare as fallback; the firewall is on and only
-Syncthing's ports are opened.
+NetworkManager with systemd-resolved. DNS goes to Cloudflare then Quad9 — one
+ordered list, because resolved fails over through `DNS=` and never reaches
+`FallbackDNS` once a global `DNS=` is set. DNS-over-TLS is opportunistic, so a
+captive portal still works. The firewall is on and default-deny; what is open is
+listed in `modules/nixos/network.nix`.
 
 ### Diagnose
 
@@ -281,7 +283,6 @@ Syncthing's ports are opened.
 |---|---|
 | `gping <host>` | Ping as a live graph — you see the jitter, not just the numbers. |
 | `mtr <host>` | Traceroute and ping combined, continuously. The tool for "where in the path is it dropping". |
-| `speedtest-cli` | Measure the actual ISP link. |
 | `iftop` | Live per-connection throughput on an interface. |
 | `iperf3 -s` / `iperf3 -c <host>` | Real throughput between two of your own machines. |
 | `arp-scan --localnet` | Every device on the LAN, with MAC vendors. |
@@ -385,11 +386,12 @@ prebuilt binaries, plus containers and phone tooling.
 
 | Thing | What it does |
 |---|---|
-| *nix-ld* | Why a downloaded, dynamically-linked binary runs at all here — Puppeteer's Chrome, mason's language servers, prebuilt npm native modules. |
-| `uv run x.py`, `uvx ruff` | Python with no system Python. uv brings its own interpreters. |
+| *nix-ld* | Why a downloaded, dynamically-linked binary runs at all here — a browser a tool fetches for itself, mason's language servers, prebuilt npm native modules. |
+| `python3` *(3.14)* | CPython 3.14, the current stable series — named explicitly, since bare `python3` in this nixpkgs is still 3.13. Interpreter only; `python3 -m venv .venv` for project deps, or a devShell. |
 | `node`, `npx` | The fallback runtime mason and MCP servers shell out to. Pin real versions per project in a devShell. |
 | `cc` *(gcc)* | Needed by nvim-treesitter to compile parsers, and by node-gyp. |
-| `chromium` | The scraper browser. `PUPPETEER_EXECUTABLE_PATH` and `CHROME_BIN` already point at it. |
+| `chromium` | The generic Chrome for tools that shell out to one — `CHROME_BIN` points at it. Playwright does NOT use it; it has its own (`PLAYWRIGHT_BROWSERS_PATH`). Brave Origin is not a substitute: it hangs in headless mode. |
+| *Playwright* | `PLAYWRIGHT_BROWSERS_PATH` is preset to the Nix-built chromium+firefox+webkit, so `npx playwright test` needs no `playwright install`. Pin the project's npm `playwright` to the driver version (1.59.1) or it looks for a browser build number that is not there. Puppeteer is deliberately not wired up. |
 | `./foo.AppImage` | Executable directly, via binfmt. |
 | `flatpak install …` | Enabled, and it is also what makes cosmic-store appear. Add flathub once: `sudo flatpak remote-add --if-not-exists flathub …`. |
 | *file limit* | 524 288 open files per process, up from systemd's 1024 — a large monorepo's watchers used to hit EMFILE. |
