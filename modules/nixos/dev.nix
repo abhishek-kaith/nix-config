@@ -20,8 +20,8 @@ in
 
   # ── nix-ld: run prebuilt, dynamically-linked binaries on NixOS ────
   # Without this, non-Nix binaries fail with "No such file or directory" even
-  # though they exist: Puppeteer's downloaded Chrome, editor-installed language
-  # servers, bun, prebuilt npm native modules, random downloaded CLIs.
+  # though they exist: a browser a tool downloads for itself, editor-installed
+  # language servers, bun, prebuilt npm native modules, random downloaded CLIs.
   programs.nix-ld.enable = true;
 
   # ── containers (Podman, docker-compatible) ───────────────────────
@@ -103,8 +103,23 @@ in
     pnpm
     nodejs   # mason installs ts_ls/tailwindcss via npm; agents run MCP servers via npx
     gcc      # `cc` — nvim-treesitter compiles each parser from source; also node-gyp
-    uv       # python without a system python: `uv run x.py`, `uvx ruff` — brings
-             # its own interpreters (they're prebuilt, hence the nix-ld above)
+
+    # CPython 3.14, the current upstream stable series, giving `python3`,
+    # `python3.14` and `python`. Named explicitly because bare `python3` in this
+    # nixpkgs is still 3.13 — the channel default lags the newest release by a
+    # cycle, and following it would silently downgrade this.
+    #
+    # `.withPackages` with an empty list, not the bare `python314`, for a reason
+    # worth keeping: environment.systemPackages also links a package's `doc`
+    # output, and Hydra only caches that for the *default* python. Bare python314
+    # therefore drags in sphinx and builds the CPython manual locally on every
+    # host, every time the pin moves. withPackages produces a single-output env,
+    # so there is no doc output to link and nothing to build but a symlink tree.
+    #
+    # Libraries go in the list when something global needs them; per-project deps
+    # still belong in a devShell, or in a plain `python3 -m venv` (which works —
+    # nixpkgs patches ensurepip so venvs get their own working pip).
+    (python314.withPackages (_ps: [ ]))
   ];
 
   # ── environment ──────────────────────────────────────────────────
@@ -113,13 +128,52 @@ in
     VISUAL = "nvim";
     PAGER  = "less";
 
-    # Scrapers: use the Nix chromium instead of a downloaded Chrome that can't run
-    # under NixOS (no /lib). adb needs no setup here — systemd 258 auto-handles USB perms.
-    PUPPETEER_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
-    PUPPETEER_SKIP_DOWNLOAD   = "true";
-    CHROME_BIN                = "${pkgs.chromium}/bin/chromium";
-    # Playwright (uncomment — pulls playwright-driver.browsers, which is large):
-    # PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
-    # PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
+    # Browser automation: Playwright, pointed at the Nix-built browsers.
+    # A browser a tool downloads for itself cannot run here (no /lib, no FHS), so
+    # every runner has to be handed a store path instead.
+    #
+    # PLAYWRIGHT_BROWSERS_PATH replaces playwright's ~/.cache/ms-playwright, and
+    # SKIP_VALIDATE stops it re-checking distro packages it can't find on NixOS.
+    # The cost is real: ~420 MiB of downloads, 1.1 GiB in the store (chromium +
+    # firefox + webkit, all three, there is no per-browser split).
+    #
+    # Version coupling to watch: nixpkgs pins the driver (1.59.1 in this checkout)
+    # and the browser dirs are named after ITS build numbers. A project whose npm
+    # `playwright` is a different minor looks for a build number that is not in
+    # there and fails with "Executable doesn't exist". Fix that in the project, by
+    # pinning its npm playwright to the driver version above — not by unsetting
+    # this. `nix eval .#nixosConfigurations.t14.pkgs.playwright-driver.version`
+    # prints whatever the current pin actually is.
+    PLAYWRIGHT_BROWSERS_PATH = "${pkgs.playwright-driver.browsers}";
+    PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "true";
+
+    # Generic "which Chrome?" variable, read by karma, lighthouse, chrome-launcher
+    # and friends. Playwright ignores it — it uses its own chromium from the path
+    # above — so this is only for tools that shell out to a browser themselves.
+    #
+    # It stays pointed at pkgs.chromium, and the two obvious ways to drop that
+    # ~734 MB were both tried and both failed:
+    #
+    #   brave-origin (the daily browser, modules/home/brave-origin.nix) — hangs.
+    #     `--headless --dump-dom https://example.com` produced no output and no
+    #     error until it was killed at 90s; plain chromium answered in seconds.
+    #     It also ships only bin/brave-origin, no chrome-named binary.
+    #   playwright's own chromium — same hang on the same command. It is a full
+    #     chrome build meant to be driven over CDP, not from the command line, and
+    #     its path carries a driver build number (chromium-1217/) that moves on
+    #     every bump.
+    #
+    # So chromium earns its place as the one browser that behaves like plain
+    # Chrome. Note the cost is 734 MB, not the ~1.9 GB its closure reports:
+    # 349 of its 353 store paths are already shared with the desktop. If nothing
+    # here actually reads CHROME_BIN, delete this line and `chromium` above and
+    # let Playwright be the only browser.
+    CHROME_BIN = "${pkgs.chromium}/bin/chromium";
+
+    # Puppeteer: deliberately off. It would need PUPPETEER_EXECUTABLE_PATH +
+    # PUPPETEER_SKIP_DOWNLOAD, both pointing at pkgs.chromium, or its bundled
+    # Chrome download fails to launch. Playwright covers the same ground.
+    #
+    # adb needs no setup here — systemd 258 auto-handles USB perms.
   };
 }
