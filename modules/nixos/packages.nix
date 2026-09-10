@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pkgs-unstable, ... }:
 {
   # System-wide CLI toolbox, shared by every host (incl. the dev VMs).
   # Grouped by purpose; GUI apps live in apps.nix, the desktop itself in cosmic.nix.
@@ -9,11 +9,11 @@
     which
 
     # ── monitoring ────────────────────────────────────────────────
-    btop lm_sensors iotop htop
+    btop lm_sensors iotop   # no htop alongside btop: same job, one of them is enough
     procs                   # modern `ps` (tree, colour, search)
     duf ncdu                # disk usage: duf = df, ncdu = interactive du
     bandwhich               # live per-process network bandwidth
-    pfetch fastfetch        # system info fetch (fastfetch = fast, modern)
+    fastfetch               # system info fetch (pfetch dropped — this supersedes it)
     acpi                    # battery / thermal / AC status
 
     # ── editors ───────────────────────────────────────────────────
@@ -56,7 +56,11 @@
     mtr whois               # live traceroute+ping / ownership lookup
     arp-scan                # discover every device on the LAN
     iperf3 tcpdump          # bandwidth test / packet capture
-    gping speedtest-cli iftop   # ping-graph / ISP speed / live iface usage
+    gping iftop             # ping-graph / live iface usage. Deliberately no
+                            # speedtest-cli: the python Ookla client is unmaintained
+                            # and reports optimistically against a server it picks
+                            # itself. `nix run nixpkgs#speedtest-rs` for a one-off,
+                            # or Ookla's own `speedtest` binary if you trust it.
 
     # ── DNS ───────────────────────────────────────────────────────
     # `dnsutils` alone, NOT `dnsutils` + `dig`. In nixpkgs those are two separate
@@ -80,10 +84,18 @@
 
     # ── dev / git ─────────────────────────────────────────────────
     git gh                  # GitHub CLI (PRs, issues, gists)
+
+    # Shopify CLI, from unstable on purpose: stable pins 3.91.1 and upstream is on
+    # 4.x. Shopify retires old CLI majors against their own API, so the stable pin
+    # is the one version guaranteed to start nagging and then failing. Binary is
+    # `shopify`. Moves with `nix flake update nixpkgs-unstable`.
+    pkgs-unstable.shopify-cli
+
     delta                   # syntax-highlighted git diffs
     lazygit                 # TUI git
     git-lfs difftastic      # large files / structural diff
-    just                    # project task runner
+    just gnumake            # project task runners: just for this repo, make because
+                            # most upstream projects still ship a Makefile
     watchexec hyperfine tokei   # run-on-change / benchmark / count LOC
 
     # ── file transfer ─────────────────────────────────────────────
