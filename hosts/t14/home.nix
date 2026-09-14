@@ -12,6 +12,7 @@
     ../../modules/home/cosmic.nix     # the DE, user half: COSMIC mime defaults + GTK3 light/dark sync
     ../../modules/home/starship.nix   # prompt config (out-of-store)
     ../../modules/home/easyeffects.nix # mic denoise/AGC chain (laptop mic)
+    ../../modules/home/pass.nix       # gpg + gpg-agent (gcr pinentry), pass + pass-otp
   ];
 
   home.username      = user;
