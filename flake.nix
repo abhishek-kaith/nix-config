@@ -24,6 +24,12 @@
     # Deliberately NOT `follows = "nixpkgs"`: numtide builds its cache against
     # the pin below, and overriding it turns every agent into a local build.
     llm-agents.url = "github:numtide/llm-agents.nix";
+
+    # Zen browser — not in nixpkgs; this repackages the upstream binary release.
+    # see modules/home/zen-browser.nix
+    zen-browser.url = "github:0xc000022070/zen-browser-flake";
+    zen-browser.inputs.nixpkgs.follows = "nixpkgs";
+    zen-browser.inputs.home-manager.follows = "home-manager";
   };
 
   # inputs@ binds ALL inputs as a single attribute set called `inputs`
