@@ -54,6 +54,23 @@
   #   services.fprintd.enable = true;
   #   then `fprintd-enroll` once as ${user}.
 
+  # ── /data: bxstudio data partition ───────────────────────────────
+  # nvme0n1p3 was partitioned by hand in the space disko.nix leaves unallocated
+  # (so it is NOT in disko.nix, and `nix run .#install -- t14` would wipe it).
+  # LUKS2 -> ext4, holding the sound library, index, render cache and projects.
+  # Same passphrase as cryptroot, so stage 1 unlocks both with one prompt.
+  # ext4 rather than btrfs: large WAVs and SQLite files fragment under CoW.
+  # nofail: a problem with this disk must never block booting the system.
+  boot.initrd.luks.devices.cryptdata = {
+    device        = "/dev/disk/by-uuid/b37fbad1-30b2-4e35-83ed-174527efef06";
+    allowDiscards = true; # SSD TRIM through LUKS
+  };
+  fileSystems."/data" = {
+    device  = "/dev/mapper/cryptdata";
+    fsType  = "ext4";
+    options = [ "noatime" "nofail" ];
+  };
+
   # ── no sshd ──────────────────────────────────────────────────────
   # Deliberately absent, where the VMs do run one. This machine joins networks it
   # does not control (cafe, hotel, conference wifi), and openFirewall puts :22 on
