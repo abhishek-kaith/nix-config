@@ -26,7 +26,8 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   packages.nix / dev.nix  CLI toolbox / nix-ld, podman, AI agents (llm-agents input), runtimes
   shell.nix               zsh, fzf, zoxide, starship
   desktop.nix             DE-agnostic floor: audio, fonts, polkit, keyring
-  cosmic.nix              THE desktop (system half): COSMIC from unstable, greeter, GTK glue
+  cosmic.nix              THE desktop (system half): COSMIC from unstable, greeter, GTK glue (t480)
+  plasma.nix              …or KDE Plasma + Karousel scrolling tiling, SDDM, KWallet, KDE Connect (t14)
   apps.nix                GUI apps COSMIC lacks (mpv, qimgv, gimp, …), flatpak support
   syncthing.nix           file sync, UI on localhost:8384
   laptop.nix              laptops: fwupd, lid → suspend-then-hibernate, battery thresholds
@@ -35,7 +36,8 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
 modules/home/           USER layer, imported by hosts/<h>/home.nix
   git / zsh / tmux / starship / neovim / scripts / direnv / Brave Origin / easyeffects
   xdg.nix                 user dirs (+ ~/Projects/{work,personal}), DE-agnostic mime defaults
-  cosmic.nix              THE desktop (user half): COSMIC mime defaults, GTK3 light/dark sync
+  cosmic.nix              THE desktop (user half): COSMIC mime defaults, GTK3 light/dark sync (t480)
+  plasma.nix              …or Plasma's: plasma-manager (Karousel keys, sleep), Qt pinentry, mime defaults (t14)
 
 hosts/<h>/              hostname, bootloader, user, ssh, VM quirks, disko, hardware-config
 ```

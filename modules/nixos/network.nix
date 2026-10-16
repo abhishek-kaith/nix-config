@@ -44,11 +44,14 @@
   #
   #   22000/tcp + 22000,21027/udp  syncthing.nix, openDefaultPorts (sync + discovery)
   #   5353/udp                     mDNS — services.avahi, which the upstream COSMIC
-  #                                module turns on with openFirewall for itself.
+  #                                module turns on with openFirewall for itself
+  #                                (COSMIC hosts only; Plasma does not enable avahi).
   #                                Browse-only: publish.* is all false, so this host
   #                                answers nothing, it only listens. Close it with
   #                                `services.avahi.openFirewall = false;` if no
   #                                printer/cast discovery is wanted on foreign wifi.
+  #   1714–1764/tcp+udp            KDE Connect — t14 only (plasma.nix). Pairing
+  #                                required, TLS, but it announces the host name.
   #   22/tcp                       ONLY on the vbx/vkvm VMs (openssh.openFirewall).
   #                                t14/t480 run no sshd on purpose — see their
   #                                default.nix.

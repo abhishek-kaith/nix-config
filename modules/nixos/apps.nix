@@ -8,8 +8,8 @@
   # Removed with niri/noctalia, because COSMIC ships an equivalent:
   #   thunar + xfconf + tumbler + ffmpegthumbnailer + xarchiver → cosmic-files
   #   grim + slurp                                             → cosmic-screenshot
-  # (satty came back — see the screen capture section below. cosmic-screenshot
-  #  captures but cannot annotate, and epoch 1 has no replacement for that.)
+  # (satty came back, but lives in cosmic.nix: it fills a COSMIC gap —
+  #  cosmic-screenshot cannot annotate — and Plasma's Spectacle already can.)
 
   services.gvfs.enable = true;  # trash, mounting, network browsing for cosmic-files
 
@@ -23,8 +23,8 @@
     qimgv              # fast image viewer — COSMIC epoch 1 has no image viewer
     gimp3              # the editor behind the viewer: crop, retouch, layers.
                        # imagemagick (packages.nix) covers the scriptable half.
-                       # `satty` below is for screenshots specifically — reach for
-                       # that first, it is a far shorter path for an annotation.
+                       # For marking up a screenshot, the DE's tool is the far
+                       # shorter path: Spectacle on Plasma, satty on COSMIC.
     libreoffice-fresh  # .docx/.xlsx/.pptx + ODF. Nothing else here opens them —
                        # the browser will not, and the PDF readers only read PDF. No
                        # mime mappings for it in home/xdg.nix on purpose: it is the
@@ -35,13 +35,12 @@
     keepassxc          # password manager; browser integration is configured in the app
 
     # ── screen capture ─────────────────────────────────────────────
-    # cosmic-screenshot takes the picture and stops there — epoch 1 has no
-    # annotation and no recording at all.
-    satty              # annotate a capture: arrows, boxes, blur, text. Feed it a
-                       # saved screenshot (`satty -f ~/Pictures/Screenshots/x.png`).
-    obs-studio         # screen + webcam recording and streaming. Captures under
-                       # COSMIC through xdg-desktop-portal-cosmic's screencast
-                       # (installed and version-locked to cosmic-comp in cosmic.nix)
+    # Taking the picture is the DE's job (cosmic-screenshot + satty, or
+    # Spectacle). This is the part neither covers well: long recordings,
+    # streaming, webcam overlays.
+    obs-studio         # screen + webcam recording and streaming. Captures through
+                       # the DE's screencast portal (xdg-desktop-portal-cosmic,
+                       # version-locked to cosmic-comp in cosmic.nix, or -kde)
                        # — there is nothing to configure, pick "Screen Capture
                        # (PipeWire)" as the source. The virtual camera is the one
                        # thing that needs more: it wants the v4l2loopback kernel

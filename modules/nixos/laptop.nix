@@ -26,6 +26,13 @@ in
   # A capsule update applies during the *next* boot, not immediately.
   services.fwupd.enable = true;
 
+  # ── bluetooth ────────────────────────────────────────────────────
+  # Both ThinkPads have a radio. Stated here because it is hardware, not a
+  # desktop feature: the COSMIC module happened to turn it on (as an mkDefault),
+  # the Plasma one does not, so a DE swap silently lost headphones. The DE's own
+  # applet (cosmic-applets / bluedevil) is the UI for pairing.
+  hardware.bluetooth.enable = true;
+
   # ── lid close → suspend, then hibernate ──────────────────────────
   # Each laptop's disko.nix sizes a swap LV inside LUKS specifically so its full
   # RAM can be written out (t480: 18G for 16G, t14: 34G for 32G), and sets resumeDevice — but until now nothing

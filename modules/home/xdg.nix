@@ -37,8 +37,9 @@
   # installed — a mapping to a missing .desktop silently does nothing.
   #
   # Only DE-agnostic handlers here. The ones that point at the desktop's own apps
-  # (directories, terminal, plain text, PDF) live in modules/home/<de>.nix, so a
-  # DE swap does not have to touch this file.
+  # (directories, terminal, plain text, PDF) live in modules/home/<de>.nix, and
+  # the web ones (http/https/html/svg) in the browser's module, so swapping
+  # either does not have to touch this file.
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
@@ -50,9 +51,6 @@
       "image/bmp"        = "qimgv.desktop";
       "image/avif"       = "qimgv.desktop";   # what modern cameras and the web emit
       "image/heif"       = "qimgv.desktop";   # iPhone stills
-      # SVG is markup, not a raster: qimgv renders it poorly or not at all, and
-      # the browser is the best renderer already on the machine.
-      "image/svg+xml"    = "brave-origin.desktop";
 
       "video/mp4"        = "mpv.desktop";
       "video/x-matroska" = "mpv.desktop";
@@ -70,9 +68,6 @@
       "audio/opus"       = "mpv.desktop";
       "audio/mp4"        = "mpv.desktop";     # .m4a
       "audio/aac"        = "mpv.desktop";
-      "text/html"              = "brave-origin.desktop";
-      "x-scheme-handler/http"  = "brave-origin.desktop";
-      "x-scheme-handler/https" = "brave-origin.desktop";
     };
   };
 }

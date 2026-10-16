@@ -11,7 +11,7 @@
     ../../modules/nixos/network.nix   # networkmanager, DNS (Quad9/Cloudflare), firewall
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
-    ../../modules/nixos/apps.nix      # GUI apps: mpv, thunar, qimgv, satty, pdf
+    ../../modules/nixos/apps.nix      # GUI apps: mpv, qimgv, gimp, obs, pdf
     ../../modules/nixos/cosmic.nix    # the desktop environment (COSMIC, from unstable)
     ../../modules/nixos/syncthing.nix # file sync (opens 22000/tcp + 21027/udp)
   ];

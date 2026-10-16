@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   # `pass` password store (+ TOTP via pass-otp) on top of GnuPG.
   #
@@ -25,8 +25,9 @@
     # `busctl --user list --activatable | grep Prompter` confirms), so the
     # passphrase dialog is a GTK4 prompt that follows the GTK light/dark sync
     # instead of a foreign Qt/GTK2 box. If the Secret Service ever goes away,
-    # swap for pkgs.pinentry-qt — no other change needed.
-    pinentry.package = pkgs.pinentry-gnome3;
+    # swap for pkgs.pinentry-qt — no other change needed. mkDefault because the
+    # Plasma user module does exactly that (modules/home/plasma.nix).
+    pinentry.package = lib.mkDefault pkgs.pinentry-gnome3;
 
     # Cache the unlocked key: 1h idle, 8h absolute. gpg's own defaults (10min /
     # 2h) mean re-typing the passphrase for every OTP while logging into things;

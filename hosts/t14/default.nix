@@ -12,8 +12,8 @@
     ../../modules/nixos/network.nix   # networkmanager, DNS (Quad9/Cloudflare), firewall
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
-    ../../modules/nixos/apps.nix      # GUI apps: mpv, thunar, qimgv, satty, pdf
-    ../../modules/nixos/cosmic.nix    # the desktop environment (COSMIC, from unstable)
+    ../../modules/nixos/apps.nix      # GUI apps: mpv, qimgv, gimp, obs, pdf
+    ../../modules/nixos/plasma.nix    # the desktop environment (KDE Plasma + Karousel scrolling tiling)
     ../../modules/nixos/syncthing.nix # file sync (opens 22000/tcp + 21027/udp)
     ../../modules/nixos/laptop.nix    # fwupd, lid->hibernate, battery thresholds
     ../../modules/nixos/storage.nix   # btrfs scrub, smartd, snapper snapshots
@@ -49,8 +49,7 @@
   # Fingerprint reader (Synaptics 06cb:00bd, "Prometheus"): supported by
   # libfprint, but it needs the LVFS firmware first (`fwupdmgr update` — fwupd
   # comes from laptop.nix). Not enabled here: fprintd's PAM hook makes every
-  # `sudo` wait for a finger before it accepts a password, and cosmic-greeter
-  # does not yet drive it. When wanted:
+  # `sudo` wait for a finger before it accepts a password. When wanted:
   #   services.fprintd.enable = true;
   #   then `fprintd-enroll` once as ${user}.
 

@@ -8,12 +8,11 @@
     ../../modules/home/xdg.nix        # user dirs, mime defaults
     ../../modules/home/direnv.nix     # direnv + nix-direnv
     ../../modules/home/neovim.nix     # editable nvim config (out-of-store)
-    ../../modules/home/brave-origin.nix # Brave Origin package; settings stay browser-owned
-    ../../modules/home/zen-browser.nix  # Zen browser (flake input); settings stay browser-owned
-    ../../modules/home/cosmic.nix     # the DE, user half: COSMIC mime defaults + GTK3 light/dark sync
+    ../../modules/home/zen-browser.nix  # Zen browser (flake input), the default browser here
+    ../../modules/home/plasma.nix     # the DE, user half: plasma-manager (keys, sleep), Qt pinentry, mime defaults
     ../../modules/home/starship.nix   # prompt config (out-of-store)
     ../../modules/home/easyeffects.nix # mic denoise/AGC chain (laptop mic)
-    ../../modules/home/pass.nix       # gpg + gpg-agent (gcr pinentry), pass + pass-otp
+    ../../modules/home/pass.nix       # gpg + gpg-agent (Qt pinentry via plasma.nix), pass + pass-otp
   ];
 
   home.username      = user;

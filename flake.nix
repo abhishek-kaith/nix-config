@@ -30,6 +30,13 @@
     zen-browser.url = "github:0xc000022070/zen-browser-flake";
     zen-browser.inputs.nixpkgs.follows = "nixpkgs";
     zen-browser.inputs.home-manager.follows = "home-manager";
+
+    # Declarative KDE Plasma settings for home-manager (shortcuts, power, any
+    # *rc key) — see modules/home/plasma.nix. Writes only the keys it is given;
+    # everything else in ~/.config stays Plasma's.
+    plasma-manager.url = "github:nix-community/plasma-manager";
+    plasma-manager.inputs.nixpkgs.follows = "nixpkgs";
+    plasma-manager.inputs.home-manager.follows = "home-manager";
   };
 
   # inputs@ binds ALL inputs as a single attribute set called `inputs`

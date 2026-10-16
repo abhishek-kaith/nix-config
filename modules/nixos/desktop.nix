@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   # The DE-agnostic graphical floor: audio, fonts, keyring, polkit. Whatever
-  # desktop environment sits on top (currently modules/nixos/cosmic.nix) brings
+  # desktop environment sits on top (modules/nixos/cosmic.nix or plasma.nix) brings
   # its own compositor, portals, session entry and theming — this file is what
   # would stay identical if that were swapped out tomorrow.
 
@@ -12,6 +12,10 @@
     pulse.enable = true;
   };
   services.pulseaudio.enable = false;
+  # RealtimeKit: lets PipeWire raise its threads to realtime priority, which is
+  # what keeps audio from crackling while nix builds peg the CPU. Was only ever
+  # on because the COSMIC module set it; Plasma's does not.
+  security.rtkit.enable = true;
 
   # ── fonts ────────────────────────────────────────────────────────
   # COSMIC adds its own (fira, open-sans, noto); these are ours — the Nerd Font
@@ -38,7 +42,8 @@
   # All three are also set by the COSMIC module (polkit/dconf outright, keyring
   # as an mkDefault). Stated here anyway because they are the floor any graphical
   # session needs, not a COSMIC detail — a DE swap should not silently take the
-  # Secret Service or the polkit agent with it.
+  # Secret Service or the polkit agent with it. plasma.nix is the one DE that
+  # swaps the keyring out, for KWallet — on purpose, see the note there.
   #
   # Chromium-family browsers use this to encrypt their cookie store and fall back
   # to plaintext without it. KeePassXC remains available as the credential store,

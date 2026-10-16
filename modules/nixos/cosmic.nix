@@ -68,6 +68,13 @@ in
   environment.systemPackages = [
     pkgs-unstable.cosmic-sound-theme
 
+    # cosmic-screenshot takes the picture and stops there — epoch 1 has no
+    # annotation and no recording. satty is the annotation half: arrows, boxes,
+    # blur, text. Feed it a saved screenshot
+    # (`satty -f ~/Pictures/Screenshots/x.png`). Here rather than apps.nix
+    # because it only exists to fill this gap; Plasma's Spectacle annotates.
+    pkgs.satty
+
     # The GTK3 theme modules/home/cosmic.nix points settings.ini at; see
     # the toolkit section below for why that service has to exist at all.
     #

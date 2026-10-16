@@ -4,6 +4,13 @@ let
   # rationale at the package list below.
   agents = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system};
   caches = import ../../lib/caches.nix;
+
+  # T3 Code wraps its PATH with every agent CLI it can drive, and the default list
+  # also drags in cursor-agent and grok. Narrowed to the agents installed below.
+  # Only the thin wrapper rebuilds; t3code-unwrapped still comes from the cache.
+  t3code = agents.t3code.override {
+    providerPackages = [ agents.claude-code agents.codex agents.opencode ];
+  };
 in
 {
   imports = [ inputs.nix-index-database.nixosModules.default ];
@@ -94,6 +101,11 @@ in
     agents.codex        # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
     agents.pi           # `pi`     — model-agnostic, MIT
     agents.opencode     #
+
+    # T3 Code — a GUI over the agents above. Same input, same cache, same
+    # `nix flake update llm-agents` to bump it.
+    t3code              # `t3`             — CLI / headless server + web UI
+    t3code.desktop      # `t3code-desktop` — the Electron app (launcher entry)
 
     # ── runtimes nvim + the agents are built on ────────────────────
     # Not project toolchains — these are what the editor and the agents shell out
