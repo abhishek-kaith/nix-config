@@ -11,6 +11,12 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # home-manager's master branch tracks nixos-unstable, for hosts built with
+    # `channel = "unstable"` (lib/default.nix). Pairing release-26.05 with an
+    # unstable nixpkgs is unsupported and warns on every eval.
+    home-manager-unstable.url = "github:nix-community/home-manager";
+    home-manager-unstable.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
     # hardware-specific tuning profiles (ThinkPad T480, T14 AMD Gen 1)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
@@ -33,10 +39,11 @@
 
     # Declarative KDE Plasma settings for home-manager (shortcuts, power, any
     # *rc key) — see modules/home/plasma.nix. Writes only the keys it is given;
-    # everything else in ~/.config stays Plasma's.
+    # everything else in ~/.config stays Plasma's. Follows the unstable pair:
+    # the only Plasma host (t14) is an unstable one, and upstream trunk targets it.
     plasma-manager.url = "github:nix-community/plasma-manager";
-    plasma-manager.inputs.nixpkgs.follows = "nixpkgs";
-    plasma-manager.inputs.home-manager.follows = "home-manager";
+    plasma-manager.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    plasma-manager.inputs.home-manager.follows = "home-manager-unstable";
   };
 
   # inputs@ binds ALL inputs as a single attribute set called `inputs`
@@ -125,7 +132,7 @@
         vkvm = lib.mkHost { hostname = "vkvm"; user = "kvm";  };  # QEMU/KVM VM
         vbx  = lib.mkHost { hostname = "vbx";  user = "vbox"; };  # VirtualBox VM
         t480 = lib.mkHost { hostname = "t480"; };                 # ThinkPad T480 (user: k)
-        t14  = lib.mkHost { hostname = "t14";  };                 # ThinkPad T14 Gen 1 AMD (user: k)
+        t14  = lib.mkHost { hostname = "t14"; channel = "unstable"; };  # ThinkPad T14 Gen 1 AMD (user: k) — Plasma 6.7 for Konveyor
       };
 
       apps.${system}.install = {

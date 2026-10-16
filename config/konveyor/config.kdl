@@ -1,0 +1,371 @@
+// Konveyor configuration — t14. Linked to ~/.config/konveyor/config.kdl by
+// modules/home/plasma.nix (out-of-store), so edits here, or in Konveyor's own
+// settings page, are live on save and land in this repo either way.
+//
+// Started from upstream's data/default-config.kdl (every option, with its
+// explanation); only the binds block below was rewritten, for vim keys.
+
+input {
+    // focus-follows-mouse
+    // warp-mouse-to-focus
+    // workspace-auto-back-and-forth
+}
+
+layout {
+    fixed-workspace-count 0
+    gaps 16
+    center-focused-column "never"
+
+    // Where a new window's column opens: "left" or "right" of the focused
+    // column. A column pinned with column-position sends it to the other side.
+    new-column-position "right"
+
+    // Stretch a column to the full width while it is the only one on its
+    // workspace; it goes back to its own width once another column opens.
+    // Apps that can't be resized keep their own size.
+    always-expand-single-column true
+
+    preset-column-widths {
+        proportion 0.25
+        proportion 0.5
+        proportion 0.75
+        proportion 1.0
+    }
+
+    default-column-width { proportion 0.5; }
+    remember-window-sizes false
+    remember-window-positions false
+
+    // When an app already has a window on the workspace, open the new one
+    // next to it: "beside" gives it its own column right of the app's
+    // columns, "stack" adds it as a row under them, "off" opens it beside
+    // the focused column. Window rules can choose per app.
+    group-app-windows "beside"
+    max-rows-per-column 3
+
+    // "column" gives every new window its own column. "stack" adds it as a
+    // row to the focused column until that column holds max-rows-per-column
+    // windows, then opens a new column. Monitor profiles and window rules can
+    // choose differently.
+    new-window-placement "column"
+
+    // Float every window an app opens while it already has one open.
+    // Off globally; window rules turn it on per app (Steam below).
+    float-child-windows false
+
+    focus-ring {
+        width 4
+        // "accent" follows the KDE accent color.
+        active-color "accent"
+        inactive-color "#505050"
+    }
+
+    border {
+        off
+        width 4
+        active-color "accent"
+        inactive-color "#505050"
+        urgent-color "#9b0000"
+    }
+
+    struts {
+    }
+}
+
+gestures {
+    // KDE screen edges already open the overview, so the hot corner is off here.
+    hot-corners {
+        off
+    }
+
+    // "move-window" drags a tiled window by its title bar to a new position in the row, "scroll-view" scrolls the columns instead.
+    titlebar-drag "move-window"
+
+    // Dragging a tiled window's edge resizes its column or row. Set it to false
+    // to change the layout only through shortcuts and presets. Floating windows
+    // can always be resized.
+    resize-tiled-windows true
+
+    // Multi-finger touchpad gestures. 3-finger swipes move the row, 4-finger
+    // swipes push the focused window into the next column or to another
+    // workspace, and a 4-finger pinch opens KDE's Overview. The finger counts
+    // used here replace the matching KDE gestures. A quick 3-finger tap cycles
+    // the focused column's width like Mod+R and a 4-finger tap opens or closes
+    // the Kontrol Panel; while the 3-finger tap is mapped it replaces the
+    // touchpad's 3-finger middle click.
+    touchpad {
+        swipe-fingers 3
+        pinch-fingers 4
+        natural-swipe
+        horizontal-swipe "scroll-view"
+        vertical-swipe "switch-workspace"
+        pinch "toggle-overview"
+        window-swipe-fingers 4
+        window-horizontal-swipe "consume-or-expel"
+        window-vertical-swipe "move-window"
+        three-finger-tap "cycle-width"
+        four-finger-tap "kontrol-panel"
+        five-finger-tap "off"
+    }
+
+    // Touchscreen gestures. One finger still taps, scrolls and drags title bars;
+    // holding a title bar before dragging lifts the window to move it. Taps work
+    // like the touchpad's but act on the column under your fingers.
+    touchscreen {
+        swipe-fingers 3
+        pinch-fingers 4
+        natural-swipe
+        horizontal-swipe "scroll-view"
+        vertical-swipe "switch-workspace"
+        pinch "toggle-overview"
+        window-swipe-fingers 4
+        window-horizontal-swipe "consume-or-expel"
+        window-vertical-swipe "move-window"
+        long-press-to-move
+        long-press-ms 500
+        three-finger-tap "cycle-width"
+        four-finger-tap "kontrol-panel"
+        five-finger-tap "off"
+    }
+}
+
+animations {
+}
+
+// Screens taller than they are wide: every column fills the width and holds
+// two windows stacked, so Mod+Left/Right flips between full-width pages and
+// Mod+Up/Down moves between the two rows.
+monitor-profile "portrait" {
+    match aspect-ratio-below=1.0
+    layout {
+        default-column-width { proportion 1.0; }
+        preset-column-widths {
+            proportion 0.5
+            proportion 1.0
+        }
+        new-window-placement "stack"
+        max-rows-per-column 2
+    }
+}
+
+monitor-profile "ultrawide" {
+    match aspect-ratio-above=2.0
+    layout {
+        preset-column-widths {
+            proportion 0.25
+            proportion 0.5
+            proportion 0.75
+            proportion 1.0
+        }
+    }
+}
+
+// Window rules can target a monitor profile, e.g. a browser that fills a
+// normal monitor but takes half of an ultrawide:
+// window-rule {
+//     match app-id=r#"^google-chrome$"# monitor-profile="ultrawide"
+//     default-column-width { proportion 0.5; }
+// }
+
+window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+
+// An empty default-column-width lets WezTerm open at the width it asks for.
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+window-rule {
+    match app-id=r#"^org\.kde\.konsole$"#
+    group-app-windows "stack"
+}
+
+// Steam opens its friends list, chats and game properties as separate
+// windows. Its main window tiles and the rest float above the row.
+window-rule {
+    match app-id=r#"^steam$"#
+    float-child-windows true
+}
+
+window-rule {
+    match app-id=r#"^steam$"# title="^Steam$"
+    open-floating false
+}
+
+window-rule {
+    match app-id=r#"^org\.kde\.plasma\.emojier$"#
+    open-floating true
+}
+
+// `manage false` leaves a window to KWin instead of tiling it. Steam opens its
+// menus, notification toasts and loading placeholders as ordinary windows.
+window-rule {
+    match app-id=r#"^steam$"# title=r#"^(SteamWebhelper|about:blank.*|.+ Menu|.+ Supernav|notificationtoasts_.*|Special Offers)$"#
+    manage false
+}
+
+binds {
+    // Vim layout, one rule per modifier — same habits as the old niri config:
+    //   Mod + h j k l          focus      column left / down / up / column right
+    //   Mod + Shift + h j k l  move       the column (h/l) or window (j/k)
+    //   Mod + Ctrl + h j k l   monitor    focus another screen
+    //   Mod + Shift+Ctrl+hjkl  move the column to another screen
+    // Arrow keys mirror hjkl in every row. Up/down keep going into the
+    // workspace above/below once the end of the column is reached.
+    //
+    // KDE keys this takes over (Konveyor steals them from Plasma itself, and
+    // gives them back if it is ever removed): Meta+L, which was Lock Screen —
+    // moved to Meta+Backspace in modules/home/plasma.nix — plus Meta+Shift and
+    // Meta+Ctrl + arrows (KDE's window-to-screen / switch-desktop keys, which
+    // Konveyor's own monitors and workspaces replace).
+    //
+    // KDE's own overview stays as it was: Meta+W (this desktop), Meta+G (all).
+
+    Mod+Slash       hotkey-overlay-title="Show Shortcut Cheatsheet" { show-hotkey-overlay; }
+    Mod+Shift+Slash { show-hotkey-overlay; }
+    Mod+Return { spawn "konsole"; }
+    Mod+Q { close-window; }
+
+    // ── focus ──
+    Mod+H     { focus-column-left; }
+    Mod+J     { focus-window-or-workspace-down; }
+    Mod+K     { focus-window-or-workspace-up; }
+    Mod+L     { focus-column-right; }
+    Mod+Left  { focus-column-left; }
+    Mod+Down  { focus-window-or-workspace-down; }
+    Mod+Up    { focus-window-or-workspace-up; }
+    Mod+Right { focus-column-right; }
+    Mod+Home  { focus-column-first; }
+    Mod+End   { focus-column-last; }
+
+    // ── move ──
+    Mod+Shift+H     { move-column-left; }
+    Mod+Shift+J     { move-window-down-or-to-workspace-down; }
+    Mod+Shift+K     { move-window-up-or-to-workspace-up; }
+    Mod+Shift+L     { move-column-right; }
+    Mod+Shift+Left  { move-column-left; }
+    Mod+Shift+Down  { move-window-down-or-to-workspace-down; }
+    Mod+Shift+Up    { move-window-up-or-to-workspace-up; }
+    Mod+Shift+Right { move-column-right; }
+    Mod+Shift+Home  { move-column-to-first; }
+    Mod+Shift+End   { move-column-to-last; }
+
+    // ── monitors ──
+    Mod+Ctrl+H     { focus-monitor-left; }
+    Mod+Ctrl+J     { focus-monitor-down; }
+    Mod+Ctrl+K     { focus-monitor-up; }
+    Mod+Ctrl+L     { focus-monitor-right; }
+    Mod+Ctrl+Left  { focus-monitor-left; }
+    Mod+Ctrl+Down  { focus-monitor-down; }
+    Mod+Ctrl+Up    { focus-monitor-up; }
+    Mod+Ctrl+Right { focus-monitor-right; }
+    Mod+Shift+Ctrl+H     { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+J     { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+K     { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
+    Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
+    Mod+Shift+Ctrl+Down  { move-column-to-monitor-down; }
+    Mod+Shift+Ctrl+Up    { move-column-to-monitor-up; }
+    Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
+
+    // ── workspaces ── (u/i = down/up, as in niri; Shift moves the column
+    // there, Ctrl moves the whole workspace)
+    Mod+U         { focus-workspace-down; }
+    Mod+I         { focus-workspace-up; }
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+Page_Up   { focus-workspace-up; }
+    Mod+Shift+U         { move-column-to-workspace-down; }
+    Mod+Shift+I         { move-column-to-workspace-up; }
+    Mod+Shift+Page_Down { move-column-to-workspace-down; }
+    Mod+Shift+Page_Up   { move-column-to-workspace-up; }
+    Mod+Ctrl+U         { move-workspace-down; }
+    Mod+Ctrl+I         { move-workspace-up; }
+    Mod+Ctrl+Page_Down { move-workspace-down; }
+    Mod+Ctrl+Page_Up   { move-workspace-up; }
+
+    // Numbered workspaces. Moving a column to one is Mod+Ctrl+N, not
+    // Mod+Shift+N: KDE records Shift+digit as the symbol it types (Meta+!),
+    // so a Mod+Shift+1 bind would never fire on a US layout.
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // ── mouse ── (unchanged from upstream) KWin's own wheel shortcuts come
+    // first: Mod+Ctrl with the vertical wheel zooms and Mod+Alt with it
+    // switches desktops, so those stay unbound here.
+    Mod+WheelScrollDown           cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp             cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+Alt+WheelScrollDown  cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+Alt+WheelScrollUp    cooldown-ms=150 { move-column-to-workspace-up; }
+    Mod+WheelScrollRight      { focus-column-right; }
+    Mod+WheelScrollLeft       { focus-column-left; }
+    Mod+Ctrl+WheelScrollRight { move-column-right; }
+    Mod+Ctrl+WheelScrollLeft  { move-column-left; }
+    Mod+Shift+WheelScrollDown      { focus-column-right; }
+    Mod+Shift+WheelScrollUp        { focus-column-left; }
+    Mod+Ctrl+Shift+WheelScrollDown { move-column-right; }
+    Mod+Ctrl+Shift+WheelScrollUp   { move-column-left; }
+
+    // ── columns & windows ──
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+    Mod+Shift+W { toggle-column-tabbed-display; }
+
+    Mod+R            { switch-preset-column-width; }
+    Mod+Shift+R      { switch-preset-column-width-back; }
+    Mod+Ctrl+Shift+R { switch-preset-window-height; }
+    Mod+Ctrl+R       { reset-window-height; }
+    Mod+Minus       { set-column-width "-10%"; }
+    Mod+Equal       { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    Mod+F       { fullscreen-window; }
+    Mod+Ctrl+F  { expand-column-to-available-width; }
+    Mod+C       { center-column; }
+    Mod+Ctrl+C  { center-visible-columns; }
+
+    Mod+Space       { toggle-window-floating; }
+    Mod+Shift+Space { switch-focus-between-floating-and-tiling; }
+}
+
+// Konveyor extension: hide Plasma desktop widgets while a window is visible on
+// the active workspace of that monitor. Needs a desktop containment that reads
+// the hideDesktopWidgets key; without one this does nothing.
+hide-desktop-widgets
+
+// Konveyor extension: stretch Plasma panels to the full screen width while a
+// window on that monitor is maximized to the edges, and put them back after.
+// The panel's previous width mode is kept in the panel's own settings, so a
+// panel you change in the meantime is left the way you set it.
+fill-panels-on-maximize
+
+// Konveyor extension: uncomment to stop windows from being minimized. This
+// adds a KWin window rule that forces minimize off, which also hides the
+// minimize button on KDE title bars. The rule is removed when Konveyor is disabled.
+// disable-minimize

@@ -35,7 +35,7 @@ system moves as one generation — with the previous one still bootable.
 | Command | What it does |
 |---|---|
 | `nix flake update` | Bump every input: nixpkgs, home-manager, COSMIC's unstable, the agents, the nix-index database. |
-| `nix flake update nixpkgs-unstable` | Just COSMIC's source — the desktop is pinned to unstable through an overlay. |
+| `nix flake update nixpkgs-unstable` | COSMIC's source on t480 (pinned to unstable through an overlay) — and the entire t14 system, which is built from unstable for Plasma 6.7. |
 | `nix flake update llm-agents` | Just claude / codex / pi / opencode. They come from the `llm-agents` input precisely so they move on their own. |
 | `nix-collect-garbage -d` | Manual GC. Automatic weekly GC (30-day retention) and store optimisation at 13:00 are already on. |
 | `nix-tree` | Walk a closure's dependency graph — what is dragging in that 400 MB. |

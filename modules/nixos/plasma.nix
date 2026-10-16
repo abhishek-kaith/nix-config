@@ -1,22 +1,6 @@
 { lib, pkgs, user, ... }:
 let
-  # KWin loads a script or effect when kwinrc says `<id>Enabled=true` — or, when
-  # kwinrc says nothing at all, when the plugin's metadata says EnabledByDefault
-  # (kwin src/scripting/scripting.cpp: `value.isNull() ? isEnabledByDefault() : …`).
-  # Both plugins below ship `false`, which would mean a trip to System Settings on
-  # every fresh install. Flipping the default in a copy of the package brings them
-  # up on first login with nothing written to kwinrc, and switching one off in
-  # System Settings still sticks: that writes an explicit `false`, which wins.
-  #
-  # A copy (runCommand) rather than overrideAttrs + postInstall, so this cannot
-  # silently do nothing if a package's installPhase stops running its hooks.
-  enabledByDefault = pkg: pkgs.runCommand "${pkg.name}-enabled" { nativeBuildInputs = [ pkgs.jq ]; } ''
-    cp -r --no-preserve=mode ${pkg} $out
-    find $out/share/kwin -name metadata.json | while read -r m; do
-      jq '.KPlugin.EnabledByDefault = true' "$m" > "$m.tmp"
-      mv "$m.tmp" "$m"
-    done
-  '';
+  konveyor = pkgs.callPackage ../../pkgs/konveyor.nix { };
 in
 {
   # The SYSTEM half of the desktop-environment layer, KDE Plasma flavour; the user
@@ -24,15 +8,17 @@ in
   # cosmic.nix pair (README: "Switch desktop") — a host imports one pair, never
   # both: greeter, autologin, portals and the Secret Service all collide.
   #
-  # Plasma comes from the system nixpkgs (26.05: Plasma 6.6), deliberately NOT
-  # overlaid from unstable the way COSMIC is. Plasma is Qt all the way down, and
-  # pulling it from unstable means a second Qt build in the same session: its
-  # platform-theme and style plugins land on the shared plugin path, and the
-  # stable Qt apps here (qimgv, keepassxc, …) reject plugins built against a
-  # newer Qt, losing their theming. COSMIC is Rust/iced and has no such coupling.
-  # Plasma moves when nixpkgs moves to the next release.
+  # Plasma comes from the host's own nixpkgs, never overlaid from unstable the
+  # way COSMIC is. Plasma is Qt all the way down, and pulling it from a second
+  # nixpkgs means a second Qt build in the same session: its platform-theme and
+  # style plugins land on the shared plugin path, and Qt apps from the first
+  # nixpkgs (qimgv, keepassxc, …) reject plugins built against a newer Qt and
+  # lose their theming. COSMIC is Rust/iced and has no such coupling. A host
+  # that needs a newer Plasma moves whole — t14 is `channel = "unstable"` in
+  # flake.nix for exactly this (Konveyor, below, needs KWin 6.7).
   # Everything Plasma stores in ~/.config (kwinrc, kglobalshortcutsrc, panels,
-  # theme) is Plasma's own state, edited in System Settings and never managed here.
+  # theme) is Plasma's own state, edited in System Settings and never managed
+  # here; the few keys that are managed live in modules/home/plasma.nix.
   services.desktopManager.plasma6.enable = true;
 
   # Defaults the module installs that this machine already has, or must not have.
@@ -47,16 +33,31 @@ in
     kwin-x11     # the X11 session; this machine is Wayland-only
   ];
 
+  # Konveyor builds against this nixpkgs' KWin and needs >= 6.7. Without this,
+  # importing the module on a stable 26.05 host (Plasma 6.6) fails deep inside
+  # a CMake log instead of saying why.
+  assertions = [{
+    assertion = lib.versionAtLeast pkgs.kdePackages.kwin.version "6.7";
+    message = "modules/nixos/plasma.nix: Konveyor needs KWin >= 6.7, this host has ${pkgs.kdePackages.kwin.version}. Build the host with `channel = \"unstable\";` in flake.nix, or wait for a release that ships Plasma 6.7.";
+  }];
+
   environment.systemPackages = [
-    # Scrolling-column tiling, niri-style, as a KWin script: every window is a
-    # column on one horizontal strip, Meta+A/D walks it, Meta+W/S moves within a
-    # stacked column. Several of its default keys are already Plasma's;
-    # modules/home/plasma.nix frees them and binds Karousel. One known gap:
-    # Karousel tiles a single screen only.
-    (enabledByDefault pkgs.kdePackages.karousel)
-    # Animates windows moved or resized by a script. Without it every Karousel
-    # move is an instant jump; upstream recommends the pair.
-    (enabledByDefault pkgs.kwin-script-geometry-change)
+    # Scrolling-column tiling, niri-style: every window is a column on one
+    # endless horizontal row, with workspaces stacked above and below. A native
+    # KWin effect (pkgs/konveyor.nix), switched on by default there. Configured
+    # by ~/.config/konveyor/config.kdl — the vim binds — which
+    # modules/home/plasma.nix links to config/konveyor/config.kdl in this repo.
+    # It takes any KDE shortcut its binds need away from Plasma by itself, and
+    # gives them back if it is ever removed.
+    #
+    # Not installed: upstream's optional "Konveyor widgets" (taskbar, Kontrol
+    # Panel launcher, monitors). They live in a git submodule and swap out
+    # Plasma's own launcher; the tiling is complete without them.
+    #
+    # Also not granted: the `input` group. Konveyor reads raw /dev/input only
+    # for 3/4/5-finger touchpad *taps* (swipes and pinches work without it), and
+    # that group lets any process running as you read every keystroke.
+    konveyor
 
     # Disk usage as a clickable sunburst — the GUI half of ncdu/duf
     # (packages.nix). Also opens from Dolphin's context menu on any folder.

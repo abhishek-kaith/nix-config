@@ -25,7 +25,13 @@
                        # imagemagick (packages.nix) covers the scriptable half.
                        # For marking up a screenshot, the DE's tool is the far
                        # shorter path: Spectacle on Plasma, satty on COSMIC.
-    libreoffice-fresh  # .docx/.xlsx/.pptx + ODF. Nothing else here opens them —
+    # The newest LibreOffice line. 26.05 calls it `libreoffice-fresh` (plain
+    # `libreoffice` is the older "still" line there); unstable renamed the scheme,
+    # made plain `libreoffice` the newest and turned `-fresh` into a warning
+    # alias. Choosing by whether the new name exists keeps stable hosts on
+    # fresh and an unstable host (t14) warning-free.
+    (if pkgs ? libreoffice-stable then libreoffice else libreoffice-fresh)
+                       # .docx/.xlsx/.pptx + ODF. Nothing else here opens them —
                        # the browser will not, and the PDF readers only read PDF. No
                        # mime mappings for it in home/xdg.nix on purpose: it is the
                        # only handler for those types, so it wins the default by

@@ -5,20 +5,25 @@ Flake-based NixOS for two laptops and two dev VMs. Shared concerns live in
 setting is a comment next to it in the module — this file is the map and the
 commands.
 
-| Host   | Platform      | User   |
-|--------|---------------|--------|
-| `t480` | ThinkPad T480 | `k`    |
-| `t14`  | ThinkPad T14 Gen 1 (AMD) | `k` |
-| `vkvm` | QEMU/KVM VM   | `kvm`  |
-| `vbx`  | VirtualBox VM | `vbox` |
+| Host   | Platform      | User   | Channel | Desktop |
+|--------|---------------|--------|---------|---------|
+| `t480` | ThinkPad T480 | `k`    | 26.05   | COSMIC  |
+| `t14`  | ThinkPad T14 Gen 1 (AMD) | `k` | **unstable** | Plasma + Konveyor |
+| `vkvm` | QEMU/KVM VM   | `kvm`  | 26.05   | COSMIC  |
+| `vbx`  | VirtualBox VM | `vbox` | 26.05   | COSMIC  |
+
+t14 is built whole from nixos-unstable (`channel = "unstable"` in `flake.nix`)
+because Konveyor needs KWin 6.7 and 26.05 ships 6.6. Drop that argument to move
+it back once a stable release carries Plasma 6.7.
 
 ## Layout
 
 ```
 flake.nix               inputs, host list, the `install` app
-lib/default.nix         mkHost — wires home-manager + specialArgs (pkgs-unstable, repoDir)
+lib/default.nix         mkHost — per-host channel (stable/unstable), home-manager, specialArgs
+pkgs/                   packages nixpkgs lacks (konveyor.nix — the KWin tiling effect)
 lib/caches.nix          extra binary caches — read by dev.nix AND the installer
-config/                 native dotfiles (nvim, tmux, zsh, git, starship, scripts) — edited live
+config/                 native dotfiles (nvim, tmux, zsh, git, starship, scripts, konveyor) — edited live
 
 modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   base.nix                nix settings/gc, locale, console, boot, zram, earlyoom, sysctl
@@ -27,7 +32,7 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   shell.nix               zsh, fzf, zoxide, starship
   desktop.nix             DE-agnostic floor: audio, fonts, polkit, keyring
   cosmic.nix              THE desktop (system half): COSMIC from unstable, greeter, GTK glue (t480)
-  plasma.nix              …or KDE Plasma + Karousel scrolling tiling, SDDM, KWallet, KDE Connect (t14)
+  plasma.nix              …or KDE Plasma + Konveyor scrolling tiling, SDDM, KWallet, KDE Connect (t14)
   apps.nix                GUI apps COSMIC lacks (mpv, qimgv, gimp, …), flatpak support
   syncthing.nix           file sync, UI on localhost:8384
   laptop.nix              laptops: fwupd, lid → suspend-then-hibernate, battery thresholds
@@ -37,7 +42,7 @@ modules/home/           USER layer, imported by hosts/<h>/home.nix
   git / zsh / tmux / starship / neovim / scripts / direnv / Brave Origin / easyeffects
   xdg.nix                 user dirs (+ ~/Projects/{work,personal}), DE-agnostic mime defaults
   cosmic.nix              THE desktop (user half): COSMIC mime defaults, GTK3 light/dark sync (t480)
-  plasma.nix              …or Plasma's: plasma-manager (Karousel keys, sleep), Qt pinentry, mime defaults (t14)
+  plasma.nix              …or Plasma's: Konveyor config link, plasma-manager (lock key, sleep), Qt pinentry, mime (t14)
 
 hosts/<h>/              hostname, bootloader, user, ssh, VM quirks, disko, hardware-config
 ```
@@ -78,7 +83,8 @@ nixos-rebuild build --flake ~/nix-config#t480 \
 sudo nixos-rebuild --rollback                          # or hold Space at boot for the menu
 
 nix flake update                     # all inputs
-nix flake update nixpkgs-unstable    # just COSMIC's source
+nix flake update nixpkgs-unstable    # COSMIC's source on t480/VMs — and ALL of t14
+nix flake update home-manager-unstable plasma-manager   # t14's user layer
 nix flake update llm-agents          # just claude/codex/pi
 nix flake check                      # evaluate every host — run before switch
 nix-collect-garbage -d
@@ -130,6 +136,7 @@ what a machine does.
 | zsh      | managed `.zshrc` sources `config/zsh/`   | new shell         |
 | git      | `[include]` of `config/git/config`       | next `git`        |
 | scripts  | out-of-store symlink → `~/.scripts/`     | live              |
+| konveyor | out-of-store symlink → `~/.config/konveyor/config.kdl` (t14) | on save — check with `konveyor validate` |
 
 If something outside nix overwrote a managed file, the rebuild moves it aside as
 `*.hm-bak` instead of failing.
