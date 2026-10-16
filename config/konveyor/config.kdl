@@ -3,7 +3,9 @@
 // settings page, are live on save and land in this repo either way.
 //
 // Started from upstream's data/default-config.kdl (every option, with its
-// explanation); only the binds block below was rewritten, for vim keys.
+// explanation). Changed from it: the binds block (vim keys), both 4-finger taps
+// (Overview instead of the Kontrol Panel widget), and hide-desktop-widgets
+// removed — the last two need upstream's widgets, which are not installed.
 
 input {
     // focus-follows-mouse
@@ -103,8 +105,13 @@ gestures {
         window-swipe-fingers 4
         window-horizontal-swipe "consume-or-expel"
         window-vertical-swipe "move-window"
+        // Touchpad TAPS are inert on t14: counting the fingers of a tap needs raw
+        // /dev/input access (the `input` group), deliberately not granted — see
+        // modules/nixos/plasma.nix. Swipes and pinches above work regardless,
+        // and a 3-finger tap stays libinput's middle click. Kept configured so
+        // adding the group is the only step if that is ever wanted.
         three-finger-tap "cycle-width"
-        four-finger-tap "kontrol-panel"
+        four-finger-tap "toggle-overview"   // upstream: "kontrol-panel" (widget, not installed)
         five-finger-tap "off"
     }
 
@@ -124,7 +131,7 @@ gestures {
         long-press-to-move
         long-press-ms 500
         three-finger-tap "cycle-width"
-        four-finger-tap "kontrol-panel"
+        four-finger-tap "toggle-overview"   // upstream: "kontrol-panel" (widget, not installed)
         five-finger-tap "off"
     }
 }
@@ -353,11 +360,6 @@ binds {
     Mod+Space       { toggle-window-floating; }
     Mod+Shift+Space { switch-focus-between-floating-and-tiling; }
 }
-
-// Konveyor extension: hide Plasma desktop widgets while a window is visible on
-// the active workspace of that monitor. Needs a desktop containment that reads
-// the hideDesktopWidgets key; without one this does nothing.
-hide-desktop-widgets
 
 // Konveyor extension: stretch Plasma panels to the full screen width while a
 // window on that monitor is maximized to the edges, and put them back after.
