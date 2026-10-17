@@ -31,6 +31,14 @@ stdenv.mkDerivation {
     hash = "sha256-O0ThBDoNJZb0sItKqcedziBbbOqsjy5T3NPABqj0iZk=";
   };
 
+  # KWin 6.8 made Effect::paintWindow return bool (false: painting failed,
+  # so a window skipped on purpose returns true, as KWin's own slide effect
+  # does), and Konveyor still overrides 6.7's void one, so it stopped
+  # building there (upstream issue #47). Only applied from 6.8 on, where it
+  # is needed and where it compiles. When a rev bump brings upstream's own
+  # fix, this fails with "patch does not apply": delete it then.
+  patches = lib.optional (lib.versionAtLeast kdePackages.kwin.version "6.8") ./konveyor-kwin-6.8.patch;
+
   postPatch = ''
     # Every target builds with -Werror. Upstream tracks one compiler; nixpkgs
     # bumps gcc on its own schedule, and a new warning must not become a

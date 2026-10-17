@@ -66,6 +66,11 @@ in
     # The top bar's workspace numbers (the panel is in modules/home/plasma.nix).
     (pkgs.callPackage ../../pkgs/workspace-indicator { })
 
+    # Darkly, the Qt app style with see-through toolbars and sidebars (chosen
+    # and tuned in modules/home/plasma.nix). System-wide so every Qt app and
+    # KWin's decoration loader find its plugins.
+    pkgs.darkly
+
     # Disk usage as a clickable sunburst — the GUI half of ncdu/duf
     # (packages.nix). Also opens from Dolphin's context menu on any folder.
     pkgs.kdePackages.filelight

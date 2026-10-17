@@ -1,0 +1,36 @@
+--- a/src/effect/plugin/konveyoreffect.h
++++ b/src/effect/plugin/konveyoreffect.h
+@@ -43,7 +43,7 @@
+     void prePaintScreen(KWin::ScreenPrePaintData &data) override;
+     void postPaintScreen() override;
+     void prePaintWindow(KWin::RenderView *view, KWin::EffectWindow *w, KWin::WindowPrePaintData &data) override;
+-    void paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask,
++    bool paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w, int mask,
+         const KWin::Region &deviceRegion, KWin::WindowPaintData &data) override;
+     bool blocksDirectScanout() const override;
+ 
+--- a/src/effect/plugin/konveyoreffect.cpp
++++ b/src/effect/plugin/konveyoreffect.cpp
+@@ -156,18 +156,18 @@
+     KWin::Effect::prePaintWindow(view, w, data);
+ }
+ 
+-void KonveyorEffect::paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w,
++bool KonveyorEffect::paintWindow(const KWin::RenderTarget &renderTarget, const KWin::RenderViewport &viewport, KWin::EffectWindow *w,
+     int mask, const KWin::Region &deviceRegion, KWin::WindowPaintData &data)
+ {
+     const std::optional<QRectF> home = spillHome(w->window());
+     if (!home) {
+-        KWin::Effect::paintWindow(renderTarget, viewport, w, mask, deviceRegion, data);
+-        return;
++        return KWin::Effect::paintWindow(renderTarget, viewport, w, mask, deviceRegion, data);
+     }
+     const KWin::Region clipped = deviceRegion & viewport.mapToDeviceCoordinatesAligned(KWin::RectF(*home));
+     if (!clipped.isEmpty()) {
+-        KWin::Effect::paintWindow(renderTarget, viewport, w, mask, clipped, data);
++        return KWin::Effect::paintWindow(renderTarget, viewport, w, mask, clipped, data);
+     }
++    return true;
+ }
+ 
+ void KonveyorEffect::prePaintScreen(KWin::ScreenPrePaintData &data)

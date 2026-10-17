@@ -21,8 +21,9 @@ it back once a stable release carries Plasma 6.7.
 ```
 flake.nix               inputs, host list, the `install` app
 lib/default.nix         mkHost — per-host channel (stable/unstable), home-manager, specialArgs
-pkgs/                   packages nixpkgs lacks (t14): konveyor.nix — the KWin tiling effect;
-                          titlebar-toggle — KWin script, Meta+T; workspace-indicator — the top bar's numbers
+pkgs/                   packages nixpkgs lacks (t14): konveyor.nix — the KWin tiling effect (+ its KWin 6.8 patch);
+                          titlebar-toggle — KWin script, Meta+T; workspace-indicator — the top bar's numbers;
+                          tela-circle-plasma, breeze-boxed — the icon theme and Plasma style, adjusted
 lib/caches.nix          extra binary caches — read by dev.nix AND the installer
 config/                 native dotfiles (nvim, tmux, zsh, git, starship, scripts, konveyor, ghostty) — edited live;
                           konsole/ — Konsole's colour scheme

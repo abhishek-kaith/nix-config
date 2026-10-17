@@ -1,7 +1,7 @@
-// Konveyor's workspaces as one row of numbers in the top bar: the current one
-// is a wider highlighted pill, workspaces with windows on them are bright and
-// empty ones faded. Click a number to go there; scroll over the row to step
-// through them.
+// Konveyor's workspaces as one row of numbers in the top bar: an accent
+// box sits behind the current one and slides when you switch, ones with
+// windows are bright, empty ones faded. Click a number to go there; scroll
+// over the row to step through them.
 import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
@@ -62,10 +62,30 @@ PlasmoidItem {
         });
     }
 
-    fullRepresentation: RowLayout {
-        spacing: Kirigami.Units.smallSpacing
+    fullRepresentation: Item {
+        id: row
+
+        // Every number gets the same small cell, so the box can slide from
+        // one to the next and the row never shifts as you switch.
+        readonly property int cellHeight: Math.round(digit.height + Kirigami.Units.smallSpacing)
+        readonly property int cellWidth: Math.round(cellHeight * 1.3)
+        readonly property int gap: Math.round(Kirigami.Units.smallSpacing / 2)
+        readonly property int count: desktops.desktopIds.length
+        readonly property int currentIndex: desktops.desktopIds.indexOf(desktops.currentDesktop)
+        readonly property int duration: Kirigami.Units.longDuration
+
+        implicitWidth: count * cellWidth + Math.max(0, count - 1) * gap
+        implicitHeight: cellHeight
         Layout.minimumWidth: implicitWidth
         Layout.preferredWidth: implicitWidth
+
+        // The numbers' font, measured once for the cell size.
+        TextMetrics {
+            id: digit
+            font.pointSize: 7   // level with the clock
+            font.weight: Font.DemiBold
+            text: "8"
+        }
 
         // One workspace per wheel notch; a touchpad's small steps add up to one.
         WheelHandler {
@@ -77,44 +97,57 @@ PlasmoidItem {
             }
         }
 
-        Repeater {
-            model: desktops.desktopIds
+        // The current workspace: a small accent box behind its number, its
+        // corners rounded a little, not into a pill.
+        Rectangle {
+            visible: row.currentIndex >= 0
+            x: row.currentIndex * (row.cellWidth + row.gap)
+            anchors.verticalCenter: parent.verticalCenter
+            width: row.cellWidth
+            height: row.cellHeight
+            radius: Math.round(height / 4)
+            color: Kirigami.Theme.highlightColor
+            Behavior on x {
+                NumberAnimation { duration: row.duration; easing.type: Easing.OutCubic }
+            }
+        }
 
-            delegate: Rectangle {
-                id: pill
-                required property string modelData
-                required property int index
-                readonly property bool current: modelData === desktops.currentDesktop
-                readonly property bool busy: root.occupied[modelData] === true
-                readonly property color text: Kirigami.Theme.textColor
+        Row {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: row.gap
 
-                Layout.alignment: Qt.AlignVCenter
-                implicitHeight: Math.round(Kirigami.Units.gridUnit * 1.1)
-                implicitWidth: Math.round(implicitHeight * (current ? 1.8 : 1))
-                radius: height / 2
-                color: current ? Kirigami.Theme.highlightColor
-                     : mouse.containsMouse ? Qt.rgba(text.r, text.g, text.b, 0.15)
-                     : "transparent"
-                Behavior on implicitWidth {
-                    NumberAnimation { duration: Kirigami.Units.shortDuration; easing.type: Easing.OutCubic }
-                }
-
-                PlasmaComponents.Label {
-                    anchors.centerIn: parent
-                    text: pill.index + 1
-                    color: pill.current ? Kirigami.Theme.highlightedTextColor : pill.text
-                    opacity: pill.current || pill.busy ? 1 : 0.45
-                    font.bold: pill.current
-                }
+            Repeater {
+                model: desktops.desktopIds
 
                 // A MouseArea rather than HoverHandler: its hover clears on the
                 // panel's leave event even when the pointer exits fast.
-                MouseArea {
-                    id: mouse
-                    anchors.fill: parent
+                delegate: MouseArea {
+                    id: cell
+                    required property string modelData
+                    required property int index
+                    readonly property bool current: index === row.currentIndex
+                    readonly property bool busy: root.occupied[modelData] === true
+
+                    width: row.cellWidth
+                    height: row.cellHeight
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.kwin("setCurrentDesktop", [new DBus.int32(pill.index + 1)])
+                    onClicked: root.kwin("setCurrentDesktop", [new DBus.int32(index + 1)])
+
+                    PlasmaComponents.Label {
+                        anchors.centerIn: parent
+                        text: cell.index + 1
+                        font.pointSize: digit.font.pointSize
+                        font.weight: cell.current ? Font.DemiBold : Font.Medium
+                        color: cell.current ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
+                        opacity: cell.current || cell.busy || cell.containsMouse ? 1 : 0.4
+                        Behavior on color {
+                            ColorAnimation { duration: row.duration }
+                        }
+                        Behavior on opacity {
+                            NumberAnimation { duration: Kirigami.Units.shortDuration }
+                        }
+                    }
                 }
             }
         }

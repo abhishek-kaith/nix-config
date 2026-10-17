@@ -459,7 +459,7 @@ managed by Nix, and they survive every rebuild.
 
 *Defined in `modules/nixos/plasma.nix`, `modules/home/plasma.nix`, `config/konveyor/config.kdl`, `modules/home/ghostty.nix`, `modules/nixos/mic-denoise.nix`.*
 
-Breeze Dark, Papirus-Dark icons and Inter in a slim top bar, with title bars
+Breeze Dark colours, Darkly glass apps, Tela-circle icons and Inter in a slim top bar, with title bars
 hidden. Windows scroll sideways in columns, as in niri. The keys follow the
 layout Hyprland, i3 and sway share, with vim <kbd>h/j/k/l</kbd> and the arrows as two
 spellings of each direction. The Konveyor config is live-edited: save it and
@@ -497,7 +497,7 @@ the change applies, no rebuild needed.
 | *terminal* | **Ghostty** (`config/ghostty/config`, live-edited: <kbd>Ctrl-Shift-,</kbd> reloads it). tmux does tabs and splits, so Ghostty's own tab/split keys are off. Copy/paste is <kbd>Ctrl-Shift-C/V</kbd>, font size <kbd>Ctrl-=</kbd>/<kbd>Ctrl--</kbd>. Konsole is still installed as the fallback. |
 | *tmux in Ghostty* | Truecolour, focus events, and yanks that reach the desktop clipboard (OSC 52) all work inside tmux. Over ssh, Ghostty installs its terminfo on the remote host. |
 | *floating* | Opens floating automatically: picture-in-picture (bottom-right, follows you across workspaces), the screen-share picker and the "sharing" bar, Spectacle (as a centred window, not full screen), password and auth prompts, KCalc, and any dialog. Anything else: <kbd>Meta-V</kbd>. |
-| *top bar* | Workspaces on the left: the current one is the blue pill, ones with windows are bright, empty ones faded. Click a number to go there, or scroll over them to step through. Clock in the middle; on the right only the status icons, with clipboard, Brightness and Color and the rest behind the ^ arrow. |
+| *top bar* | Workspaces on the left as plain numbers: an accent box sits behind the current one and slides when you switch, ones with windows are bright, empty ones faded. Click a number to go there, or scroll over them to step through. Clock in the middle. On the right: notifications, clipboard, sound, network and battery; Bluetooth, media, Brightness and Color and the rest are behind the ▾ arrow. |
 | *screen and touchpad* | Night Light warms the screen from sunset to sunrise wherever you are; pause it from Brightness and Color. The touchpad scrolls naturally (content follows your fingers), and tap is a click. |
 | *keys KDE gave up* | <kbd>Meta-arrows</kbd> (KDE: quick tile), <kbd>Meta-1…9</kbd> (KDE: taskbar entries), <kbd>Meta-Q</kbd> (KDE: activities), <kbd>Meta-Tab</kbd> (KDE: a second <kbd>Alt-Tab</kbd>), <kbd>Meta-=</kbd>/<kbd>Meta--</kbd> (KDE: zoom; <kbd>Meta-Ctrl-wheel</kbd> still zooms) and <kbd>Meta-B</kbd> (KDE: power profile; switch it from the battery icon). |
 | *speed* | Power profile follows the plug: performance on AC, balanced on battery. Baloo indexes file names only and skips `~/Projects`. If the desktop gets slow, check those two first. |
@@ -508,7 +508,8 @@ the change applies, no rebuild needed.
 | What | Where | Takes effect |
 |---|---|---|
 | Accent colour, incl. **from the wallpaper** | System Settings → Colors & Themes → Colors → Accent colour. *From current wallpaper* is on: a colourful wallpaper (the teal library, the hills) sets the accent; the black-and-white Fuji has no colour to give, so it stays Breeze blue. Wallpaper: System Settings → Wallpaper. | Immediately. Konveyor's focus ring and the current-workspace pill follow the accent. |
-| **Light mode by hand** | System Settings → Colors & Themes → Colors → *Breeze Light*, then Icons → *Papirus* (back: *Breeze Dark* and *Papirus-Dark*). The bar and Ghostty follow the colours. Not the Global Theme page: applying one there resets the icons to Breeze too. | Immediately. |
+| **Light mode by hand** | System Settings → Colors & Themes → Colors → *Breeze Light*, then Icons → *Tela circle light* (back: *Breeze Dark* and *Tela circle dark*). The bar and Ghostty follow the colours. Not the Global Theme page: applying one there resets the icons to Breeze too. | Immediately. |
+| How see-through apps are (Darkly) | System Settings → Colors & Themes → Application Style → *Darkly* → ⚙ (Transparency tab). To keep a change, copy the numbers into `darklyrc` in `modules/home/plasma.nix`, or the next rebuild puts those back. | Next time the app opens. |
 | Colour scheme, Plasma style, icons, cursor, wallpaper | System Settings, freely. The repo sets a starting value (`workspace` in `modules/home/plasma.nix`) that is re-applied only when that value is edited. | Immediately. |
 | Window keys, gaps, corners, float rules | `config/konveyor/config.kdl` (or Konveyor's settings page, which edits the same file) | On save. No rebuild. |
 | Terminal look and keys | `config/ghostty/config` | <kbd>Ctrl-Shift-,</kbd> in Ghostty. No rebuild. |

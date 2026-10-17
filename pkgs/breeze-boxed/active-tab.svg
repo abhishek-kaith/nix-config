@@ -1,0 +1,37 @@
+    <!-- breeze-boxed: the mark on a bar item whose popup is open, and on the
+         selected tab inside popups. An accent box with 4px corners, inset
+         4px from the top and bottom of what it marks (16px tall in the 24px
+         bar, like the current workspace's box). The 0.01-opacity rects only
+         reserve that inset, the way Breeze's own invisible frame parts do. -->
+    <g id="breeze-boxed-active-tab" transform="translate(560,900)">
+        <g id="north-active-tab-topleft" transform="translate(0,0)">
+            <rect width="4" height="8" style="opacity:0.01;fill:#e4e6e8" />
+            <path d="M4,8 L0,8 A4,4 0 0 1 4,4 Z" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        </g>
+        <g id="north-active-tab-top" transform="translate(10,0)">
+            <rect width="4" height="8" style="opacity:0.01;fill:#e4e6e8" />
+            <rect y="4" width="4" height="4" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        </g>
+        <g id="north-active-tab-topright" transform="translate(20,0)">
+            <rect width="4" height="8" style="opacity:0.01;fill:#e4e6e8" />
+            <path d="M0,8 L0,4 A4,4 0 0 1 4,8 Z" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        </g>
+        <rect id="north-active-tab-left" x="0" y="20" width="4" height="4" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        <rect id="north-active-tab-center" x="10" y="20" width="4" height="4" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        <rect id="north-active-tab-right" x="20" y="20" width="4" height="4" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        <g id="north-active-tab-bottomleft" transform="translate(0,40)">
+            <rect width="4" height="8" style="opacity:0.01;fill:#e4e6e8" />
+            <path d="M4,0 L4,4 A4,4 0 0 1 0,0 Z" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        </g>
+        <g id="north-active-tab-bottom" transform="translate(10,40)">
+            <rect width="4" height="8" style="opacity:0.01;fill:#e4e6e8" />
+            <rect width="4" height="4" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        </g>
+        <g id="north-active-tab-bottomright" transform="translate(20,40)">
+            <rect width="4" height="8" style="opacity:0.01;fill:#e4e6e8" />
+            <path d="M0,0 L4,0 A4,4 0 0 1 0,4 Z" class="ColorScheme-ButtonFocus" style="fill:currentColor;fill-opacity:0.45" />
+        </g>
+        <!-- Stretch rather than tile the edges, so no seams show between
+             the see-through pieces. -->
+        <rect id="north-active-tab-hint-stretch-borders" x="40" y="0" width="2" height="2" style="opacity:0.01;fill:#e4e6e8" />
+    </g>

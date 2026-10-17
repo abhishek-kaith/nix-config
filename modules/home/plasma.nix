@@ -37,23 +37,56 @@
   # These are the apply-once kind (see the top of the file): a starting point
   # that System Settings can change from there. Applying a Global Theme there
   # replaces ALL of them (icons back to Breeze too); to go light by hand, pick
-  # Breeze Light under Colors instead, and "Papirus" under Icons — Papirus-Dark
-  # suits dark mode only.
+  # Breeze Light under Colors instead, and "Tela circle light" under Icons.
   programs.plasma.workspace = {
     colorScheme = "BreezeDark";
-    # Plasma style (panel, popups, OSDs): "default" is Breeze in the colours of
-    # the current scheme, so the bar follows a switch to light; "breeze-dark"
-    # would stay dark.
-    theme       = "default";
-    iconTheme   = "Papirus-Dark";
+    # Plasma style (the bar, its popups, OSDs): Breeze in the colours of the
+    # current scheme, so the bar follows a switch to light, with a rounded
+    # accent box instead of an underline on an item whose popup is open
+    # (pkgs/breeze-boxed). Utterly-Round was tried here and dropped: its
+    # upstream stopped in 2024, and Breeze moves with every Plasma release.
+    theme       = "breeze-boxed";
+    # Tela-circle: every app a flat colour circle, a look of its own rather
+    # than a copy of macOS or Windows, and plain one-colour tray icons (with
+    # a bell for notifications, see pkgs/tela-circle-plasma). Picked over
+    # Colloid, whose rounded squares lean macOS and whose tray arrow was a
+    # large chevron, and Papirus, whose solid tray icons looked heavy.
+    iconTheme   = "Tela-circle-dark";
     cursor      = { theme = "breeze_cursors"; size = 24; };
     wallpaper   = "${repoDir}/config/wallpapers/minimal-02.jpg";
     splashScreen.theme = "None";   # autologin already lands straight on the desktop
   };
+  # The lock screen shows the desktop's picture rather than Plasma's
+  # default one. A KEY, written at every activation (see the top of the file).
+  programs.plasma.kscreenlocker.appearance.wallpaper = config.programs.plasma.workspace.wallpaper;
+
   home.packages = [
-    pkgs.papirus-icon-theme
+    (pkgs.callPackage ../../pkgs/breeze-boxed { })
+    (pkgs.callPackage ../../pkgs/tela-circle-plasma { })
     pkgs.kdePackages.kcalc   # floats (config/konveyor/config.kdl); KRunner's `=` covers quick sums
   ];
+
+  # ── app style: Darkly ───────────────────────────────────────────
+  # Darkly (installed by modules/nixos/plasma.nix) is a Breeze-like Qt style
+  # that can draw parts of a window see-through, with KWin's blur behind:
+  # toolbars, menus, tabs and Dolphin's sidebar turn to frosted glass, while
+  # the content (file list, text) stays solid to keep it readable. KDE/Qt apps
+  # only — GTK apps and browsers draw themselves. widgetStyle is a KEY (written
+  # every activation); System Settings → Application Style → Darkly's gear
+  # tunes the opacities live, until the next rebuild writes these back.
+  programs.plasma.workspace.widgetStyle = "Darkly";
+  programs.plasma.configFile.darklyrc = {
+    # Buttons, fields and menus rounded like the windows (Konveyor's 6px)
+    # rather than Darkly's 9px.
+    Common.CornerRadius = 6;
+    Style = {
+      ToolBarOpacity        = 75;
+      MenuBarOpacity        = 75;
+      TabBarOpacity         = 75;
+      MenuOpacity           = 85;
+      DolphinSidebarOpacity = 65;
+    };
+  };
 
   # Blur behind anything translucent (the panel, the Konsole below) and a
   # slight dim on every window but the focused one: with title bars hidden,
@@ -113,7 +146,9 @@
   programs.plasma.panels = [
     {
       location = "top";
-      height   = 28;
+      # 24 rather than 28: in a bar this slim Plasma draws tray icons at
+      # 16px instead of 22 (scaleToFit below).
+      height   = 24;
       floating = false;
       opacity  = "translucent";   # see-through, with the blur effect behind it
       widgets = [
@@ -127,24 +162,38 @@
             date.format.custom = "ddd d MMM";
             date.position = "besideTime";
             # A fixed size: left on auto, the clock grows to fill the bar's
-            # height and towers over everything else in it. Inter 10 like the
-            # rest of the UI; weight is on Qt 6's 1–1000 scale (400 regular,
-            # 500 medium), so the option's default of 50 would be hairline.
-            font = { family = "Inter"; size = 10; weight = 500; };
+            # height and towers over everything else in it. Inter 7, small
+            # like a phone's status bar; weight is on Qt 6's 1–1000 scale
+            # (400 regular, 500 medium), so the option's default of 50 would
+            # be hairline.
+            font = { family = "Inter"; size = 7; weight = 500; };
           };
         }
         { panelSpacer.expanding = true; }
         {
-          systemTray.items = {
-            # Kept to the status icons (sound, network, Bluetooth, battery, and
-            # media while something plays); the rest wait behind the ^ arrow.
-            # Clipboard history has Meta+Shift+V, brightness the Fn keys, and
-            # Merkuro's contact book is there only because the app is installed.
-            hidden = [
-              "org.kde.plasma.clipboard"
-              "org.kde.plasma.brightness"
-              "org.kde.merkuro.contact.applet"
-            ];
+          systemTray = {
+            # Small icons (16px in the 24px bar, Plasma's smallest standard
+            # size) with room between them.
+            icons = { scaleToFit = true; spacing = "medium"; };
+            items = {
+              # Always in the bar (Plasma sorts them itself).
+              shown = [
+                "org.kde.plasma.notifications"
+                "org.kde.plasma.clipboard"
+                "org.kde.plasma.volume"
+                "org.kde.plasma.networkmanagement"
+                "org.kde.plasma.battery"
+              ];
+              # Always behind the arrow. Anything not named in either list
+              # (USB drives, the camera-in-use light) shows only while active.
+              hidden = [
+                "org.kde.plasma.bluetooth"
+                "org.kde.plasma.mediacontroller"
+                "org.kde.plasma.brightness"
+                "org.kde.kdeconnect"
+                "org.kde.merkuro.contact.applet"
+              ];
+            };
           };
         }
       ];
