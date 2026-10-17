@@ -451,7 +451,73 @@ managed by Nix, and they survive every rebuild.
 | `gtk-theme-sync` | Run it by hand to see what it decided. It watches COSMIC's `is_dark` flag and rewrites GTK3/GTK4 `settings.ini` so old GTK apps follow the light/dark switch — GTK4/libadwaita and COSMIC apps already do via the portal. |
 | *fonts* | Iosevka Nerd Font (mono), JetBrains Mono as backup, Noto Sans/Serif, Noto Color Emoji. |
 | *audio* | PipeWire with ALSA and PulseAudio compatibility; PulseAudio itself off. |
-| `easyeffects` | GUI for the mic chain. Runs hidden as a service with the `mic` preset: RNNoise → DeepFilterNet → Speex (AGC + dereverb) → Exciter → Stereo Tools. If voices sound thin or underwater, bypass **one** of the two denoisers. |
+| `easyeffects` | GUI for the mic chain (t480). Runs hidden as a service with the `mic` preset: RNNoise → DeepFilterNet → Speex (AGC + dereverb) → Exciter → Stereo Tools. If voices sound thin or underwater, bypass **one** of the two denoisers. |
+
+---
+
+## The desktop — Plasma + Konveyor (t14)
+
+*Defined in `modules/nixos/plasma.nix`, `modules/home/plasma.nix`, `config/konveyor/config.kdl`, `modules/home/ghostty.nix`, `modules/nixos/mic-denoise.nix`.*
+
+Breeze Dark, Papirus-Dark icons and Inter in a slim top bar, with title bars
+hidden. Windows scroll sideways in columns, as in niri. The keys follow the
+layout Hyprland, i3 and sway share, with vim <kbd>h/j/k/l</kbd> and the arrows as two
+spellings of each direction. The Konveyor config is live-edited: save it and
+the change applies, no rebuild needed.
+
+### Keys
+
+| Key | What it does |
+|---|---|
+| <kbd>Meta-Space</kbd> or tap <kbd>Meta</kbd> | Search (KRunner): apps, files, settings, `=` maths, unit conversion. |
+| <kbd>Meta-Return</kbd> / <kbd>Meta-B</kbd> / <kbd>Meta-E</kbd> | Ghostty / Zen browser / Dolphin. |
+| <kbd>Meta-Q</kbd> | Close the window. |
+| <kbd>Meta-H/J/K/L</kbd> | Focus left / down / up / right. At the end of a column, <kbd>J</kbd>/<kbd>K</kbd> continue into the workspace below or above. |
+| <kbd>Meta-Shift-H/J/K/L</kbd> | Move the window that way. |
+| <kbd>Meta-Ctrl-H/J/K/L</kbd> | Resize: narrower / taller / shorter / wider. |
+| <kbd>Meta-Alt-H/J/K/L</kbd> | Focus another monitor. Add <kbd>Shift</kbd> to move the window there. |
+| <kbd>Meta-1…9</kbd> / <kbd>Meta-Shift-1…9</kbd> | Go to a workspace / send the window there. |
+| <kbd>Meta-Tab</kbd> | Back to the previous workspace, and forth again. <kbd>Alt-Tab</kbd> still switches windows. |
+| <kbd>Meta-F</kbd> / <kbd>Meta-M</kbd> | Fullscreen / maximize the column (the bar stays visible). |
+| <kbd>Meta-V</kbd> | Float or tile the window. <kbd>Meta-Shift-Space</kbd> jumps between floating and tiled windows. |
+| <kbd>Meta-R</kbd> | Cycle the column width: ¼, ½, ¾, full. <kbd>Meta-C</kbd> centres the column. |
+| <kbd>Meta-,</kbd> / <kbd>Meta-.</kbd> | Pull the next window into this column as a row / push it back out into its own column. |
+| <kbd>Meta-Shift-W</kbd> | Show the column as tabs, and back again. If windows ever look stacked or tabbed, this or <kbd>Meta-.</kbd> undoes it. |
+| <kbd>Meta-T</kbd> | Show or hide the title bars on every window. They start hidden at each login. |
+| <kbd>Meta-W</kbd> / <kbd>Meta-G</kbd> | KDE Overview: this desktop / all desktops. |
+| <kbd>Meta-Shift-V</kbd> / <kbd>Meta-;</kbd> | Clipboard history / emoji picker. |
+| <kbd>Meta-Shift-S</kbd> | Region screenshot (Spectacle). |
+| <kbd>Meta-Backspace</kbd> / <kbd>Meta-Shift-E</kbd> | Lock the screen / log out, restart or shut down. |
+| <kbd>Meta-/</kbd> | Shortcut cheatsheet overlay. Press it again to close it. |
+
+### Behaviour
+
+| Thing | What it does |
+|---|---|
+| *terminal* | **Ghostty** (`config/ghostty/config`, live-edited: <kbd>Ctrl-Shift-,</kbd> reloads it). tmux does tabs and splits, so Ghostty's own tab/split keys are off. Copy/paste is <kbd>Ctrl-Shift-C/V</kbd>, font size <kbd>Ctrl-=</kbd>/<kbd>Ctrl--</kbd>. Konsole is still installed as the fallback. |
+| *tmux in Ghostty* | Truecolour, focus events, and yanks that reach the desktop clipboard (OSC 52) all work inside tmux. Over ssh, Ghostty installs its terminfo on the remote host. |
+| *floating* | Opens floating automatically: picture-in-picture (bottom-right, follows you across workspaces), the screen-share picker and the "sharing" bar, Spectacle (as a centred window, not full screen), password and auth prompts, KCalc, and any dialog. Anything else: <kbd>Meta-V</kbd>. |
+| *top bar* | Workspaces on the left: the current one is the blue pill, ones with windows are bright, empty ones faded. Click a number to go there, or scroll over them to step through. Clock in the middle; on the right only the status icons, with clipboard, Brightness and Color and the rest behind the ^ arrow. |
+| *screen and touchpad* | Night Light warms the screen from sunset to sunrise wherever you are; pause it from Brightness and Color. The touchpad scrolls naturally (content follows your fingers), and tap is a click. |
+| *keys KDE gave up* | <kbd>Meta-arrows</kbd> (KDE: quick tile), <kbd>Meta-1…9</kbd> (KDE: taskbar entries), <kbd>Meta-Q</kbd> (KDE: activities), <kbd>Meta-Tab</kbd> (KDE: a second <kbd>Alt-Tab</kbd>), <kbd>Meta-=</kbd>/<kbd>Meta--</kbd> (KDE: zoom; <kbd>Meta-Ctrl-wheel</kbd> still zooms) and <kbd>Meta-B</kbd> (KDE: power profile; switch it from the battery icon). |
+| *speed* | Power profile follows the plug: performance on AC, balanced on battery. Baloo indexes file names only and skips `~/Projects`. If the desktop gets slow, check those two first. |
+| *mic* | Choose **Noise Canceling source** as the input once, and WirePlumber remembers it. It is RNNoise running inside PipeWire, with no app to keep open. |
+
+### Where to change what
+
+| What | Where | Takes effect |
+|---|---|---|
+| Accent colour, incl. **from the wallpaper** | System Settings → Colors & Themes → Colors → Accent colour. *From current wallpaper* is on: a colourful wallpaper (the teal library, the hills) sets the accent; the black-and-white Fuji has no colour to give, so it stays Breeze blue. Wallpaper: System Settings → Wallpaper. | Immediately. Konveyor's focus ring and the current-workspace pill follow the accent. |
+| **Light mode by hand** | System Settings → Colors & Themes → Colors → *Breeze Light*, then Icons → *Papirus* (back: *Breeze Dark* and *Papirus-Dark*). The bar and Ghostty follow the colours. Not the Global Theme page: applying one there resets the icons to Breeze too. | Immediately. |
+| Colour scheme, Plasma style, icons, cursor, wallpaper | System Settings, freely. The repo sets a starting value (`workspace` in `modules/home/plasma.nix`) that is re-applied only when that value is edited. | Immediately. |
+| Window keys, gaps, corners, float rules | `config/konveyor/config.kdl` (or Konveyor's settings page, which edits the same file) | On save. No rebuild. |
+| Terminal look and keys | `config/ghostty/config` | <kbd>Ctrl-Shift-,</kbd> in Ghostty. No rebuild. |
+| tmux, nvim, zsh, starship | `config/…` | On reload / a new shell. No rebuild. |
+| Fonts, desktop shortcuts, KRunner, power profiles, Baloo, animation speed | `modules/home/plasma.nix`. A GUI edit to these is overwritten on the next rebuild. | Rebuild (~25 s), and some only at the next login. |
+| The panel | `modules/home/plasma.nix`. GUI edits last only until the panel list there changes. | Rebuild + next login. |
+
+To keep a change you made in System Settings, `nix run --inputs-from ~/nix-config plasma-manager` prints the live Plasma config as Nix (rc2nix). Grep it for the key and copy it into `modules/home/plasma.nix`.
+| *scale* | 125%, set with `kscreen-doctor output.eDP-1.scale.1.25`. KWin keeps this setting, not this repo. |
 
 ---
 

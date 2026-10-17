@@ -12,8 +12,9 @@
     ../../modules/nixos/network.nix   # networkmanager, DNS (Quad9/Cloudflare), firewall
     ../../modules/nixos/shell.nix     # zsh, starship, fzf, zoxide
     ../../modules/nixos/desktop.nix   # audio, fonts, polkit, portals, keyring
+    ../../modules/nixos/mic-denoise.nix # RNNoise mic filter in PipeWire (replaces EasyEffects here)
     ../../modules/nixos/apps.nix      # GUI apps: mpv, qimgv, gimp, obs, pdf
-    ../../modules/nixos/plasma.nix    # the desktop environment (KDE Plasma + Karousel scrolling tiling)
+    ../../modules/nixos/plasma.nix    # the desktop environment (KDE Plasma + Konveyor scrolling tiling)
     ../../modules/nixos/syncthing.nix # file sync (opens 22000/tcp + 21027/udp)
     ../../modules/nixos/laptop.nix    # fwupd, lid->hibernate, battery thresholds
     ../../modules/nixos/storage.nix   # btrfs scrub, smartd, snapper snapshots

@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Id": "workspace-indicator",
+        "Name": "Workspace Indicator",
+        "Description": "Workspaces as one row of numbers: click to switch, scroll to step through",
+        "Icon": "virtual-desktops",
+        "Category": "Windows and Tasks",
+        "License": "GPL-3.0-or-later"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

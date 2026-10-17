@@ -6,6 +6,7 @@
   ninja,
   pkg-config,
   jq,
+  python3,
   kdePackages,
   libxcb,
   xcbutilwm,
@@ -72,6 +73,12 @@ stdenv.mkDerivation {
     libplasma
     libxcb
     xcbutilwm
+
+    # bin/konveyor-cheatsheet (Mod+/) is a Python script that asks the running
+    # effect for its binds over D-Bus. Its `#!/usr/bin/env python3` has no
+    # dbus module on NixOS, so the cheatsheet died on its first import. Being
+    # in buildInputs is what lets fixup's patchShebangs point it at this one.
+    (python3.withPackages (ps: [ ps.dbus-python ]))
   ];
 
   # The unit tests want a nested KWin session; the build itself is the check

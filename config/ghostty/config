@@ -1,0 +1,80 @@
+# Ghostty — the terminal on t14 (Meta+Return). Linked to ~/.config/ghostty/config
+# by modules/home/ghostty.nix (out-of-store): save here, then Ctrl+Shift+, in
+# any Ghostty window reloads it. `ghostty +validate-config` checks a hand edit.
+#
+# tmux does tabs, splits and sessions, so Ghostty is only a fast GPU-drawn
+# window around it. Its own tab/split keys are unbound below so they reach
+# tmux and nvim instead.
+
+# ── look: matches Plasma's Breeze, in whichever mode the desktop is in ──
+font-family = Iosevka Nerd Font
+font-size = 11
+# Follows the system light/dark setting, live: KDE publishes it through the
+# desktop portal whenever the colour scheme changes (by hand or by the
+# automatic day/night switch). "Breeze Light" is ours, in ./themes/.
+theme = light:Breeze Light,dark:Breeze
+# See-through, with KWin blurring what is behind: at 0.9 a pale wallpaper like
+# the Fuji sky only showed as a flat grey, so 0.85 lets the glass read as glass.
+background-opacity = 0.85
+background-blur = true
+window-padding-x = 6
+window-padding-y = 4
+window-padding-balance = true
+cursor-style-blink = false
+mouse-hide-while-typing = true
+
+# KWin draws the title bar (Meta+T shows or hides it, like every window's)
+# instead of Ghostty's own GTK header bar.
+window-decoration = server
+
+# One Ghostty process serves every window, so Meta+Return after the first
+# opens a new one instantly instead of starting the app again.
+gtk-single-instance = true
+
+# Closing a window loses nothing: tmux keeps the session running.
+confirm-close-surface = false
+
+# Over ssh, copy Ghostty's terminfo to the remote host (and fall back to
+# TERM=xterm-256color where that is not possible), so remote programs don't
+# fail with "unknown terminal type". The other integration features stay on.
+shell-integration-features = ssh-terminfo,ssh-env
+
+# ── keys ──
+# Tabs and splits belong to tmux: these defaults would swallow keys that
+# tmux bindings, nvim and TUI apps expect (Alt+digit, Ctrl+Tab, Ctrl+Enter, ...).
+keybind = alt+one=unbind
+keybind = alt+two=unbind
+keybind = alt+three=unbind
+keybind = alt+four=unbind
+keybind = alt+five=unbind
+keybind = alt+six=unbind
+keybind = alt+seven=unbind
+keybind = alt+eight=unbind
+keybind = alt+nine=unbind
+keybind = alt+digit_1=unbind
+keybind = alt+digit_2=unbind
+keybind = alt+digit_3=unbind
+keybind = alt+digit_4=unbind
+keybind = alt+digit_5=unbind
+keybind = alt+digit_6=unbind
+keybind = alt+digit_7=unbind
+keybind = alt+digit_8=unbind
+keybind = alt+digit_9=unbind
+keybind = ctrl+tab=unbind
+keybind = ctrl+shift+tab=unbind
+keybind = ctrl+page_up=unbind
+keybind = ctrl+page_down=unbind
+keybind = ctrl+shift+arrow_left=unbind
+keybind = ctrl+shift+arrow_right=unbind
+keybind = ctrl+shift+t=unbind
+keybind = ctrl+shift+w=unbind
+keybind = ctrl+shift+e=unbind
+keybind = ctrl+shift+o=unbind
+keybind = ctrl+shift+enter=unbind
+keybind = ctrl+alt+arrow_up=unbind
+keybind = ctrl+alt+arrow_down=unbind
+keybind = ctrl+alt+arrow_left=unbind
+keybind = ctrl+alt+arrow_right=unbind
+keybind = ctrl+enter=unbind
+# Kept: Ctrl+Shift+C/V copy/paste, Ctrl+= / Ctrl+- / Ctrl+0 font size,
+# Ctrl+Shift+F search, Ctrl+Shift+, reload this file.

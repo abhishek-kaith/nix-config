@@ -59,10 +59,21 @@ in
     # that group lets any process running as you read every keystroke.
     konveyor
 
+    # Title bars hidden on every window, Meta+T toggles them all (a KWin
+    # script; see the package for why it is on with nothing in kwinrc).
+    (pkgs.callPackage ../../pkgs/titlebar-toggle { })
+
+    # The top bar's workspace numbers (the panel is in modules/home/plasma.nix).
+    (pkgs.callPackage ../../pkgs/workspace-indicator { })
+
     # Disk usage as a clickable sunburst — the GUI half of ncdu/duf
     # (packages.nix). Also opens from Dolphin's context menu on any folder.
     pkgs.kdePackages.filelight
   ];
+
+  # The Plasma UI font (modules/home/plasma.nix sets it). System-wide, beside
+  # desktop.nix's, so Qt, GTK and the browser all resolve the same family.
+  fonts.packages = [ pkgs.inter ];
 
   # ── KDE Connect ──────────────────────────────────────────────────
   # Phone ↔ laptop: notifications, shared clipboard, send files, media and

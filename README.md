@@ -21,9 +21,11 @@ it back once a stable release carries Plasma 6.7.
 ```
 flake.nix               inputs, host list, the `install` app
 lib/default.nix         mkHost — per-host channel (stable/unstable), home-manager, specialArgs
-pkgs/                   packages nixpkgs lacks (konveyor.nix — the KWin tiling effect)
+pkgs/                   packages nixpkgs lacks (t14): konveyor.nix — the KWin tiling effect;
+                          titlebar-toggle — KWin script, Meta+T; workspace-indicator — the top bar's numbers
 lib/caches.nix          extra binary caches — read by dev.nix AND the installer
-config/                 native dotfiles (nvim, tmux, zsh, git, starship, scripts, konveyor) — edited live
+config/                 native dotfiles (nvim, tmux, zsh, git, starship, scripts, konveyor, ghostty) — edited live;
+                          konsole/ — Konsole's colour scheme
 
 modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   base.nix                nix settings/gc, locale, console, boot, zram, earlyoom, sysctl
@@ -31,6 +33,7 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   packages.nix / dev.nix  CLI toolbox / nix-ld, podman, AI agents (llm-agents input), runtimes
   shell.nix               zsh, fzf, zoxide, starship
   desktop.nix             DE-agnostic floor: audio, fonts, polkit, keyring
+  mic-denoise.nix         RNNoise mic filter inside PipeWire — a "Noise Canceling source" (t14)
   cosmic.nix              THE desktop (system half): COSMIC from unstable, greeter, GTK glue (t480)
   plasma.nix              …or KDE Plasma + Konveyor scrolling tiling, SDDM, KWallet, KDE Connect (t14)
   apps.nix                GUI apps COSMIC lacks (mpv, qimgv, gimp, …), flatpak support
@@ -39,10 +42,12 @@ modules/nixos/          SYSTEM layer, imported by hosts/<h>/default.nix
   storage.nix             laptops: btrfs scrub, smartd, snapper
 
 modules/home/           USER layer, imported by hosts/<h>/home.nix
-  git / zsh / tmux / starship / neovim / scripts / direnv / Brave Origin / easyeffects
+  git / zsh / tmux / starship / neovim / scripts / direnv / Brave Origin / easyeffects (t480)
+  ghostty.nix             the terminal on t14: config link, light/dark theme pair, terminal mime handler
   xdg.nix                 user dirs (+ ~/Projects/{work,personal}), DE-agnostic mime defaults
   cosmic.nix              THE desktop (user half): COSMIC mime defaults, GTK3 light/dark sync (t480)
-  plasma.nix              …or Plasma's: Konveyor config link, plasma-manager (lock key, sleep), Qt pinentry, mime (t14)
+  plasma.nix              …or Plasma's: look, top bar, fonts, KRunner, keys, sleep, Night Light,
+                          Konveyor config link, Konsole, Qt pinentry, mime (t14)
 
 hosts/<h>/              hostname, bootloader, user, ssh, VM quirks, disko, hardware-config
 ```
@@ -137,6 +142,7 @@ what a machine does.
 | git      | `[include]` of `config/git/config`       | next `git`        |
 | scripts  | out-of-store symlink → `~/.scripts/`     | live              |
 | konveyor | out-of-store symlink → `~/.config/konveyor/config.kdl` (t14) | on save — check with `konveyor validate` |
+| ghostty  | out-of-store symlink → `~/.config/ghostty/config` (t14) | `Ctrl+Shift+,` — check with `ghostty +validate-config` |
 
 If something outside nix overwrote a managed file, the rebuild moves it aside as
 `*.hm-bak` instead of failing.
@@ -146,6 +152,7 @@ If something outside nix overwrote a managed file, the rebuild moves it aside as
 | Want to…                                  | Read / edit                                   |
 |-------------------------------------------|-----------------------------------------------|
 | change DNS, open a port                    | `modules/nixos/network.nix`                   |
+| t14 desktop: keys, floating windows, what System Settings can change vs this repo | `CHEATSHEET.md` → "The desktop — Plasma + Konveyor" |
 | re-enable sshd on a laptop (key-only)      | comment in `hosts/<h>/default.nix`            |
 | battery thresholds, lid behaviour          | `modules/nixos/laptop.nix` (`chargeStart/End`) |
 | firmware updates                           | `fwupdmgr refresh && fwupdmgr get-updates && fwupdmgr update` |

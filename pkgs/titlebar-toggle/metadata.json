@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Id": "titlebar-toggle",
+        "Name": "Title Bar Toggle",
+        "Description": "Hide window title bars by default; Meta+T toggles them on every window",
+        "Icon": "preferences-system-windows",
+        "License": "GPL-3.0-or-later",
+        "EnabledByDefault": true
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}

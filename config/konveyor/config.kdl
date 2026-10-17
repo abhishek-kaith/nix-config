@@ -8,14 +8,11 @@
 // removed — the last two need upstream's widgets, which are not installed.
 
 input {
-    // focus-follows-mouse
-    // warp-mouse-to-focus
-    // workspace-auto-back-and-forth
 }
 
 layout {
     fixed-workspace-count 0
-    gaps 16
+    gaps 4
     center-focused-column "never"
 
     // Where a new window's column opens: "left" or "right" of the focused
@@ -56,21 +53,24 @@ layout {
     float-child-windows false
 
     focus-ring {
-        width 4
+        width 2
         // "accent" follows the KDE accent color.
         active-color "accent"
         inactive-color "#505050"
     }
 
     border {
-        off
-        width 4
+        width 2
         active-color "accent"
         inactive-color "#505050"
         urgent-color "#9b0000"
+        off
     }
 
     struts {
+    }
+    tab-indicator {
+        gaps-between-tabs 6
     }
 }
 
@@ -175,7 +175,7 @@ monitor-profile "ultrawide" {
 // }
 
 window-rule {
-    geometry-corner-radius 12
+    geometry-corner-radius 6
     clip-to-geometry true
 }
 
@@ -185,14 +185,72 @@ window-rule {
     default-column-width {}
 }
 
+// ── floating ──
+// Dialogs and any window with a parent (file pickers, "Save as", confirmations)
+// float on their own; these are the standalone windows that should too.
+// Mod+Space flips any window between floating and tiled; Mod+Shift+Space moves
+// focus between the floating layer and the row.
+
+// Picture-in-picture: floats in the bottom-right corner and stays on screen
+// across workspace switches. Zen reports itself as "zen-beta", which is why the
+// old firefox-only rule never fired here. Chromium-family browsers title it differently.
 window-rule {
-    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    match app-id=r#"^(zen|firefox)"# title="^Picture-in-Picture$"
+    match title="^Picture in picture$"
+    open-floating true
+    open-on-all-workspaces true
+    default-floating-position x=16 y=16 relative-to="bottom-right"
+}
+
+// A browser's "you are sharing your screen" bar. It stays visible on every
+// workspace so you can always see that you are still sharing.
+window-rule {
+    match title=r#"Sharing Indicator$"#
+    match title=r#"is sharing (your screen|a window|a tab)"#
+    open-floating true
+    open-on-all-workspaces true
+    default-floating-position x=0 y=8 relative-to="top"
+}
+
+// Browser side windows: downloads/history ("Library") and extension popups
+// (password managers and the like).
+window-rule {
+    match app-id=r#"^(zen|firefox)"# title="^Library$"
+    match app-id=r#"^(zen|firefox)"# title=r#"^Extension: "#
     open-floating true
 }
 
+// KDE's portal: the "choose a screen or window to share" picker, and the file
+// chooser when an app asks through the portal rather than its own dialog.
 window-rule {
-    match app-id=r#"^org\.kde\.konsole$"#
-    group-app-windows "stack"
+    match app-id=r#"^org\.freedesktop\.impl\.portal\.desktop\.kde$"#
+    match app-id=r#"^xdg-desktop-portal-gtk$"#
+    open-floating true
+}
+
+// Screenshots, passwords and prompts: quick in-and-out windows that would
+// otherwise shove the whole row over by a column.
+window-rule {
+    match app-id=r#"^org\.kde\.spectacle$"#
+    match app-id=r#"^org\.kde\.polkit-kde-authentication-agent-1$"#
+    match app-id=r#"^org\.kde\.ksshaskpass$"#
+    match app-id=r#"pinentry"#
+    match app-id=r#"^org\.kde\.(kwalletd6|ksecretd)$"#
+    match app-id=r#"^org\.kde\.kdeconnect\.handler$"#
+    match app-id=r#"^org\.kde\.bluedevil"#
+    match app-id=r#"^org\.pulseaudio\.pavucontrol$"#
+    match app-id=r#"^org\.kde\.kcalc$"#
+    open-floating true
+}
+
+// A floating window opens at the size the app asks for, and Spectacle asks for
+// one the size of the screenshot: after a capture its editor filled the
+// screen. This opens it as a centred 60% × 75% window instead.
+// A full-screen window (the region-select overlay) is sized before any rule.
+window-rule {
+    match app-id=r#"^org\.kde\.spectacle$"#
+    default-column-width { proportion 0.6; }
+    default-window-height { proportion 0.75; }
 }
 
 // Steam opens its friends list, chats and game properties as separate
@@ -220,25 +278,32 @@ window-rule {
 }
 
 binds {
-    // Vim layout, one rule per modifier — same habits as the old niri config:
-    //   Mod + h j k l          focus      column left / down / up / column right
-    //   Mod + Shift + h j k l  move       the column (h/l) or window (j/k)
-    //   Mod + Ctrl + h j k l   monitor    focus another screen
-    //   Mod + Shift+Ctrl+hjkl  move the column to another screen
-    // Arrow keys mirror hjkl in every row. Up/down keep going into the
-    // workspace above/below once the end of the column is reached.
+    // The keys every tiling WM shares (Hyprland, i3, sway), with vim hjkl
+    // and the arrows as two spellings of the same direction:
+    //   Mod + h j k l / arrows          focus
+    //   Mod + Shift + h j k l / arrows  move the window
+    //   Mod + Ctrl  + h j k l / arrows  resize (width on h/l, height on j/k)
+    //   Mod + Alt   + h j k l / arrows  focus another monitor (+Shift: move there)
+    //   Mod + 1-9 / Mod + Shift + 1-9   go to / send the window to a workspace
+    // Konveyor registers each Shift+digit bind under the symbol KDE records
+    // for it too (Meta+!), which is what makes Mod+Shift+1 fire.
     //
-    // KDE keys this takes over (Konveyor steals them from Plasma itself, and
-    // gives them back if it is ever removed): Meta+L, which was Lock Screen —
-    // moved to Meta+Backspace in modules/home/plasma.nix — plus Meta+Shift and
-    // Meta+Ctrl + arrows (KDE's window-to-screen / switch-desktop keys, which
-    // Konveyor's own monitors and workspaces replace).
+    // Desktop keys bound in modules/home/plasma.nix, not here: Mod+Space
+    // (search), Mod+Shift+V (clipboard), Mod+; (emoji), Mod+Shift+S
+    // (screenshot), Mod+Backspace (lock), Mod+Shift+E (log out / power), and
+    // Mod+T (title bars, pkgs/titlebar-toggle). KDE's Mod+W / Mod+G overviews stay.
     //
-    // KDE's own overview stays as it was: Meta+W (this desktop), Meta+G (all).
+    // Konveyor takes any KDE shortcut a bind here needs, and gives it back
+    // when the bind is removed; `konveyor restore-shortcuts` returns them all.
 
     Mod+Slash       hotkey-overlay-title="Show Shortcut Cheatsheet" { show-hotkey-overlay; }
     Mod+Shift+Slash { show-hotkey-overlay; }
-    Mod+Return { spawn "konsole"; }
+
+    // ── apps ──
+    Mod+Return hotkey-overlay-title="Terminal" { spawn "ghostty"; }
+    // Takes Meta+B from KDE's power-profile switcher (the battery icon still has it).
+    Mod+B hotkey-overlay-title="Browser" { spawn "zen-beta"; }
+    Mod+E hotkey-overlay-title="Files" { spawn "dolphin"; }
     Mod+Q { close-window; }
 
     // ── focus ──
@@ -265,26 +330,66 @@ binds {
     Mod+Shift+Home  { move-column-to-first; }
     Mod+Shift+End   { move-column-to-last; }
 
-    // ── monitors ──
-    Mod+Ctrl+H     { focus-monitor-left; }
-    Mod+Ctrl+J     { focus-monitor-down; }
-    Mod+Ctrl+K     { focus-monitor-up; }
-    Mod+Ctrl+L     { focus-monitor-right; }
-    Mod+Ctrl+Left  { focus-monitor-left; }
-    Mod+Ctrl+Down  { focus-monitor-down; }
-    Mod+Ctrl+Up    { focus-monitor-up; }
-    Mod+Ctrl+Right { focus-monitor-right; }
-    Mod+Shift+Ctrl+H     { move-column-to-monitor-left; }
-    Mod+Shift+Ctrl+J     { move-column-to-monitor-down; }
-    Mod+Shift+Ctrl+K     { move-column-to-monitor-up; }
-    Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
-    Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
-    Mod+Shift+Ctrl+Down  { move-column-to-monitor-down; }
-    Mod+Shift+Ctrl+Up    { move-column-to-monitor-up; }
-    Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
+    // ── resize ── (Ctrl+j grows the window downward, Ctrl+k shrinks it)
+    Mod+Ctrl+H     { set-column-width "-10%"; }
+    Mod+Ctrl+L     { set-column-width "+10%"; }
+    Mod+Ctrl+J     { set-window-height "+10%"; }
+    Mod+Ctrl+K     { set-window-height "-10%"; }
+    Mod+Ctrl+Left  { set-column-width "-10%"; }
+    Mod+Ctrl+Right { set-column-width "+10%"; }
+    Mod+Ctrl+Down  { set-window-height "+10%"; }
+    Mod+Ctrl+Up    { set-window-height "-10%"; }
+    Mod+Minus       { set-column-width "-10%"; }
+    Mod+Equal       { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+    // Cycle the column through 1/4, 1/2, 3/4 and full width (Shift: backwards).
+    Mod+R            { switch-preset-column-width; }
+    Mod+Shift+R      { switch-preset-column-width-back; }
+    Mod+Ctrl+R       { reset-window-height; }
+    Mod+Ctrl+Shift+R { switch-preset-window-height; }
 
-    // ── workspaces ── (u/i = down/up, as in niri; Shift moves the column
-    // there, Ctrl moves the whole workspace)
+    // ── window state ──
+    Mod+F       { fullscreen-window; }
+    // Maximize: the column takes the full width, the bar stays visible.
+    Mod+M       { maximize-column; }
+    Mod+Ctrl+F  { expand-column-to-available-width; }
+    Mod+V       { toggle-window-floating; }
+    Mod+Shift+Space { switch-focus-between-floating-and-tiling; }
+    Mod+C       { center-column; }
+    Mod+Ctrl+C  { center-visible-columns; }
+
+    // ── columns ── (scrolling-layout only: no Hyprland equivalent)
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+    // Shows a stacked column's windows as tabs, one at a time; press again to undo.
+    Mod+Shift+W { toggle-column-tabbed-display; }
+
+    // ── workspaces ──
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
+    // Back and forth between the last two workspaces. Alt+Tab still switches windows.
+    Mod+Tab { focus-workspace-previous; }
+    // Workspaces are a vertical stack: u/i and PgDn/PgUp step down/up through
+    // it. Shift takes the column along; Ctrl moves the whole workspace.
     Mod+U         { focus-workspace-down; }
     Mod+I         { focus-workspace-up; }
     Mod+Page_Down { focus-workspace-down; }
@@ -298,27 +403,23 @@ binds {
     Mod+Ctrl+Page_Down { move-workspace-down; }
     Mod+Ctrl+Page_Up   { move-workspace-up; }
 
-    // Numbered workspaces. Moving a column to one is Mod+Ctrl+N, not
-    // Mod+Shift+N: KDE records Shift+digit as the symbol it types (Meta+!),
-    // so a Mod+Shift+1 bind would never fire on a US layout.
-    Mod+1 { focus-workspace 1; }
-    Mod+2 { focus-workspace 2; }
-    Mod+3 { focus-workspace 3; }
-    Mod+4 { focus-workspace 4; }
-    Mod+5 { focus-workspace 5; }
-    Mod+6 { focus-workspace 6; }
-    Mod+7 { focus-workspace 7; }
-    Mod+8 { focus-workspace 8; }
-    Mod+9 { focus-workspace 9; }
-    Mod+Ctrl+1 { move-column-to-workspace 1; }
-    Mod+Ctrl+2 { move-column-to-workspace 2; }
-    Mod+Ctrl+3 { move-column-to-workspace 3; }
-    Mod+Ctrl+4 { move-column-to-workspace 4; }
-    Mod+Ctrl+5 { move-column-to-workspace 5; }
-    Mod+Ctrl+6 { move-column-to-workspace 6; }
-    Mod+Ctrl+7 { move-column-to-workspace 7; }
-    Mod+Ctrl+8 { move-column-to-workspace 8; }
-    Mod+Ctrl+9 { move-column-to-workspace 9; }
+    // ── monitors ── (only matters docked)
+    Mod+Alt+H     { focus-monitor-left; }
+    Mod+Alt+J     { focus-monitor-down; }
+    Mod+Alt+K     { focus-monitor-up; }
+    Mod+Alt+L     { focus-monitor-right; }
+    Mod+Alt+Left  { focus-monitor-left; }
+    Mod+Alt+Down  { focus-monitor-down; }
+    Mod+Alt+Up    { focus-monitor-up; }
+    Mod+Alt+Right { focus-monitor-right; }
+    Mod+Alt+Shift+H     { move-column-to-monitor-left; }
+    Mod+Alt+Shift+J     { move-column-to-monitor-down; }
+    Mod+Alt+Shift+K     { move-column-to-monitor-up; }
+    Mod+Alt+Shift+L     { move-column-to-monitor-right; }
+    Mod+Alt+Shift+Left  { move-column-to-monitor-left; }
+    Mod+Alt+Shift+Down  { move-column-to-monitor-down; }
+    Mod+Alt+Shift+Up    { move-column-to-monitor-up; }
+    Mod+Alt+Shift+Right { move-column-to-monitor-right; }
 
     // ── mouse ── (unchanged from upstream) KWin's own wheel shortcuts come
     // first: Mod+Ctrl with the vertical wheel zooms and Mod+Alt with it
@@ -335,30 +436,6 @@ binds {
     Mod+Shift+WheelScrollUp        { focus-column-left; }
     Mod+Ctrl+Shift+WheelScrollDown { move-column-right; }
     Mod+Ctrl+Shift+WheelScrollUp   { move-column-left; }
-
-    // ── columns & windows ──
-    Mod+BracketLeft  { consume-or-expel-window-left; }
-    Mod+BracketRight { consume-or-expel-window-right; }
-    Mod+Comma  { consume-window-into-column; }
-    Mod+Period { expel-window-from-column; }
-    Mod+Shift+W { toggle-column-tabbed-display; }
-
-    Mod+R            { switch-preset-column-width; }
-    Mod+Shift+R      { switch-preset-column-width-back; }
-    Mod+Ctrl+Shift+R { switch-preset-window-height; }
-    Mod+Ctrl+R       { reset-window-height; }
-    Mod+Minus       { set-column-width "-10%"; }
-    Mod+Equal       { set-column-width "+10%"; }
-    Mod+Shift+Minus { set-window-height "-10%"; }
-    Mod+Shift+Equal { set-window-height "+10%"; }
-
-    Mod+F       { fullscreen-window; }
-    Mod+Ctrl+F  { expand-column-to-available-width; }
-    Mod+C       { center-column; }
-    Mod+Ctrl+C  { center-visible-columns; }
-
-    Mod+Space       { toggle-window-floating; }
-    Mod+Shift+Space { switch-focus-between-floating-and-tiling; }
 }
 
 // Konveyor extension: stretch Plasma panels to the full screen width while a
@@ -371,3 +448,9 @@ fill-panels-on-maximize
 // adds a KWin window rule that forces minimize off, which also hides the
 // minimize button on KDE title bars. The rule is removed when Konveyor is disabled.
 // disable-minimize
+
+
+
+
+hide-desktop-widgets
+
