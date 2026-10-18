@@ -78,6 +78,13 @@
                             # gives a local port a public https URL (quick tunnels need
                             # no account; named tunnels: `cloudflared tunnel login`)
 
+    # ── cloud ─────────────────────────────────────────────────────
+    google-cloud-sdk        # `gcloud` / `gsutil` / `bq`; `gcloud auth login` once.
+                            # `gcloud components install` can't write to the store —
+                            # add components here instead, e.g.
+                            # (google-cloud-sdk.withExtraComponents
+                            #   [ google-cloud-sdk.components.gke-gcloud-auth-plugin ])
+
     # ── data / json ───────────────────────────────────────────────
     jq yq
     jless fx                # interactive JSON/YAML viewers
