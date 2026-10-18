@@ -88,13 +88,14 @@
     };
   };
 
-  # Blur behind anything translucent (the panel, the Konsole below) and a
-  # slight dim on every window but the focused one: with title bars hidden,
-  # the dim is what makes the active column obvious at a glance, alongside
-  # Konveyor's focus ring.
+  # Blur behind anything translucent (the panel, the Konsole below). No dim on
+  # inactive windows: KWin counts a bar popup (clock, tray, launcher) as no
+  # window being active, so every click in the bar faded the focused window
+  # dim and back, which read as the bar lagging. Konveyor's accent focus ring
+  # marks the active column on its own.
   programs.plasma.kwin.effects = {
     blur.enable        = true;
-    dimInactive.enable = true;
+    dimInactive.enable = false;
   };
   # Popups from the bar (tray, clock, workspaces) appear at once instead of
   # sliding down out of it: the slide read as a delay on every click.
@@ -138,8 +139,8 @@
     };
 
   # ── panel: one slim bar along the top ────────────────────────────
-  # Workspaces on the left, clock in the middle, tray on the right. There is
-  # no task manager: Konveyor's row is the window list, and Meta opens KRunner.
+  # The app launcher and workspaces on the left, clock in the middle, tray on
+  # the right. There is no task manager: Konveyor's row is the window list.
   # Declaring panels makes plasma-manager own ALL of them: when this list
   # changes, the next login deletes every panel and rebuilds these, so a panel
   # edited in the GUI only lasts until then.
@@ -152,6 +153,11 @@
       floating = false;
       opacity  = "translucent";   # see-through, with the blur effect behind it
       widgets = [
+        # Kickoff, Plasma's app menu, in the corner (Meta opens it, see below):
+        # favourites, every app by category, search, and the power buttons.
+        # The icon is Tela's Tux, a penguin in the same white circle as its
+        # other logos (Tela files it under kernel settings, hence the name).
+        { kickoff.icon = "preferences-system-linux"; }
         # pkgs/workspace-indicator: the 1, 2, 3 that Mod+1..9 jump to, in a
         # row, where Plasma's pager would stack them in a column under Konveyor.
         "workspace-indicator"
@@ -191,7 +197,6 @@
                 "org.kde.plasma.mediacontroller"
                 "org.kde.plasma.brightness"
                 "org.kde.kdeconnect"
-                "org.kde.merkuro.contact.applet"
               ];
             };
           };
@@ -200,14 +205,17 @@
     }
   ];
 
-  # ── Meta: a centred, Spotlight-style search ──────────────────────
-  # Tapping Meta alone opens KRunner (apps, files, settings, calculator, unit
-  # conversion, `=` for maths) in the middle of the screen, instead of the
-  # application menu. It is a modifier-only shortcut, which only kwinrc can
-  # bind; Alt+Space still opens it too. Typing on an empty desktop starts it.
-  programs.plasma.configFile.kwinrc.ModifierOnlyShortcuts.Meta = "org.kde.krunner,/App,,toggleDisplay";
+  # ── Meta: the app menu; Meta+Space: search ───────────────────────
+  # Tapping Meta alone opens the bar's Kickoff menu. It is a modifier-only
+  # shortcut, which only kwinrc can bind; this is KWin's own default, spelled
+  # out because this key used to point at KRunner and plasma-manager never
+  # deletes a key, it only writes the ones named here.
+  programs.plasma.configFile.kwinrc.ModifierOnlyShortcuts.Meta = "org.kde.plasmashell,/PlasmaShell,org.kde.PlasmaShell,activateLauncherMenu";
+  # KRunner (apps, files, settings, calculator, unit conversion, `=` for
+  # maths) drops down from the bar, like the menus beside it. Typing on an
+  # empty desktop starts it.
   programs.plasma.krunner = {
-    position                    = "center";
+    position                    = "top";
     activateWhenTypingOnDesktop = true;
     historyBehavior             = "enableSuggestions";
     # Meta+Space is the launcher key on most tiling setups (and Spotlight's);
@@ -232,6 +240,14 @@
   # with `konveyor validate`.
   xdg.configFile."konveyor/config.kdl".source =
     config.lib.file.mkOutOfStoreSymlink "${repoDir}/config/konveyor/config.kdl";
+
+  # mpv takes the size of its tile, with black bars around the picture.
+  # Left to keep the video's shape, it shrank every tile to 16:9 (an audio
+  # file's window too), Konveyor sized it back, and the two went round again
+  # on every layout change: dozens of resizes an hour while playing files.
+  xdg.configFile."mpv/mpv.conf".text = ''
+    keepaspect-window=no
+  '';
 
   # ── shortcuts ────────────────────────────────────────────────────
   # Konveyor takes the keys its binds need away from Plasma by itself, so this

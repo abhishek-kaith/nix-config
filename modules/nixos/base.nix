@@ -106,6 +106,16 @@
     persistent = false;
   };
 
+  # The weekly gc at idle priority, as NixOS already runs nix-optimise. It is
+  # persistent, so a laptop that was off at midnight on Monday runs it right
+  # after the next boot, and at normal priority its ~6 minutes of deleting
+  # store paths competed with the first minutes of the session. Housekeeping
+  # can wait for an idle CPU and disk, unlike a rebuild (see the daemon above).
+  systemd.services.nix-gc.serviceConfig = {
+    CPUSchedulingPolicy = "idle";
+    IOSchedulingClass   = "idle";
+  };
+
   nixpkgs.config.allowUnfree = true;
 
   # compressed RAM swap — eases memory pressure; coexists with disk hibernation swap.

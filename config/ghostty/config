@@ -29,9 +29,13 @@ window-padding-balance = true
 cursor-style-blink = false
 mouse-hide-while-typing = true
 
-# KWin draws the title bar (Meta+T shows or hides it, like every window's)
-# instead of Ghostty's own GTK header bar.
-window-decoration = server
+# No title bar at all, neither Ghostty's GTK header bar nor KWin's. `server`
+# (KWin draws it, Meta+T toggles it) is what this wanted, but KWin 6.7 never
+# decorates Ghostty 1.3 (forcing the border on adds nothing), and in that
+# mode Ghostty answers every resize 20px short: each tiled window stopped
+# short of the bottom gap, and Konveyor re-asked for the right size thousands
+# of times a day. `none` fills the tile exactly.
+window-decoration = none
 
 # One Ghostty process serves every window, so Meta+Return after the first
 # opens a new one instantly instead of starting the app again.

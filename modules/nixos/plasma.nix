@@ -33,6 +33,13 @@ in
     kwin-x11     # the X11 session; this machine is Wayland-only
   ];
 
+  # No KDE PIM (KMail, Kontact, Merkuro), which the plasma6 module installs by
+  # default: mail and calendars live in the browser here. With it installed,
+  # Akonadi started at every login (a private MariaDB and 14 agents, ~540 MB
+  # and ~2 s of startup) to serve accounts that were never set up. Its old
+  # data, ~/.local/share/akonadi and ~/.config/akonadi*, can be deleted.
+  programs.kde-pim.enable = false;
+
   # Konveyor builds against this nixpkgs' KWin and needs >= 6.7. Without this,
   # importing the module on a stable 26.05 host (Plasma 6.6) fails deep inside
   # a CMake log instead of saying why.

@@ -59,8 +59,10 @@
       "video/x-msvideo"  = "mpv.desktop";     # .avi
       "video/mpeg"       = "mpv.desktop";
 
-      # Audio too: mpv plays it perfectly well (no window for audio-only files),
-      # and without a mapping double-clicking an .mp3 had nothing to open it.
+      # Audio too: mpv plays it perfectly well, and without a mapping
+      # double-clicking an .mp3 had nothing to open it. Opened this way mpv
+      # shows a window even for audio (mpv.desktop runs it in pseudo-gui mode),
+      # which is also the only way to pause or quit it.
       "audio/mpeg"       = "mpv.desktop";     # .mp3
       "audio/flac"       = "mpv.desktop";
       "audio/x-wav"      = "mpv.desktop";

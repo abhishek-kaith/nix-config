@@ -469,7 +469,8 @@ the change applies, no rebuild needed.
 
 | Key | What it does |
 |---|---|
-| <kbd>Meta-Space</kbd> or tap <kbd>Meta</kbd> | Search (KRunner): apps, files, settings, `=` maths, unit conversion. |
+| Tap <kbd>Meta</kbd> | The app menu (Kickoff), in the top-left corner of the bar. |
+| <kbd>Meta-Space</kbd> | Search (KRunner), dropping down from the bar: apps, files, settings, `=` maths, unit conversion. |
 | <kbd>Meta-Return</kbd> / <kbd>Meta-B</kbd> / <kbd>Meta-E</kbd> | Ghostty / Zen browser / Dolphin. |
 | <kbd>Meta-Q</kbd> | Close the window. |
 | <kbd>Meta-H/J/K/L</kbd> | Focus left / down / up / right. At the end of a column, <kbd>J</kbd>/<kbd>K</kbd> continue into the workspace below or above. |

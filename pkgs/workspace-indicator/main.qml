@@ -29,7 +29,19 @@ PlasmoidItem {
         filterByScreen: false
         filterByActivity: false
         onCountChanged: root.updateOccupied()
-        onDataChanged: root.updateOccupied()
+        // Only a window changing workspace matters here. The model also
+        // signals every title change, and a new geometry on every frame for
+        // each window Konveyor slides, which kept the bar busy recounting
+        // all windows while workspaces switched.
+        onDataChanged: (topLeft, bottomRight, roles) => {
+            const watched = [
+                TaskManager.AbstractTasksModel.VirtualDesktops,
+                TaskManager.AbstractTasksModel.IsOnAllVirtualDesktops,
+            ];
+            if (roles.length === 0 || watched.some(role => roles.indexOf(role) >= 0)) {
+                root.updateOccupied();
+            }
+        }
     }
 
     // Desktop id → true, for each desktop with a window of its own on it

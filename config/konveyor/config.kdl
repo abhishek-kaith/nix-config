@@ -136,7 +136,13 @@ gestures {
     }
 }
 
+// Konveyor times its own animations and ignores Plasma's speed setting
+// (AnimationDurationFactor 0.5 in modules/home/plasma.nix), so this matches
+// it. Its springs otherwise take ~0.4 s to settle, and it steps them on its
+// own 8 ms timer by really moving the windows, and on width changes really
+// resizing them: half the length is half the redraws an app is asked for.
 animations {
+    slowdown 0.5
 }
 
 // Screens taller than they are wide: every column fills the width and holds
@@ -300,10 +306,17 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     // ── apps ──
-    Mod+Return hotkey-overlay-title="Terminal" { spawn "ghostty"; }
+    // A plain spawn runs the app inside KWin's own systemd service, where it
+    // would go down with KWin and be counted as KWin. systemd-run gives each
+    // its own scope in app.slice, as Kickoff and KRunner do (~30 ms; kstart,
+    // which does the same through KIO, added ~400 ms to Dolphin).
+    // Ghostty's `+new-window` asks the running instance over D-Bus without
+    // starting GTK first (~120 ms against ~250 ms for `ghostty`), and when no
+    // instance runs, D-Bus starts Ghostty as its own user service.
+    Mod+Return hotkey-overlay-title="Terminal" { spawn "ghostty" "+new-window"; }
     // Takes Meta+B from KDE's power-profile switcher (the battery icon still has it).
-    Mod+B hotkey-overlay-title="Browser" { spawn "zen-beta"; }
-    Mod+E hotkey-overlay-title="Files" { spawn "dolphin"; }
+    Mod+B hotkey-overlay-title="Browser" { spawn "systemd-run" "--user" "--scope" "--slice=app.slice" "--quiet" "zen-beta"; }
+    Mod+E hotkey-overlay-title="Files" { spawn "systemd-run" "--user" "--scope" "--slice=app.slice" "--quiet" "dolphin"; }
     Mod+Q { close-window; }
 
     // ── focus ──
