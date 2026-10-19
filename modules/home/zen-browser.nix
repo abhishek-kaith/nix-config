@@ -1,8 +1,15 @@
 { inputs, pkgs, ... }:
 let
-  zen = inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system};
-  # The flake's own wrapper, as its `default` package uses it.
-  wrapZen = import "${inputs.zen-browser}/wrap-zen.nix" pkgs.wrapFirefox;
+  system = pkgs.stdenv.hostPlatform.system;
+  zen = inputs.zen-browser.packages.${system};
+  # The flake's own wrapper, as its `default` package uses it, and from the
+  # same nixpkgs the flake builds Zen with, not this host's `pkgs`. Zen is
+  # patched against that nixpkgs' glibc; on an unstable host `pkgs.wrapFirefox`
+  # puts unstable's libpulse (whose libs need a newer glibc) on its library
+  # path, Zen fails to load it, and every tab plays silently ("OpenCubeb()
+  # failed to init cubeb").
+  zenPkgs = inputs.zen-browser.inputs.nixpkgs.legacyPackages.${system};
+  wrapZen = import "${inputs.zen-browser}/wrap-zen.nix" zenPkgs.wrapFirefox;
 in
 {
   # Package only, like brave-origin.nix: Zen owns its profile, extensions and
