@@ -84,6 +84,7 @@
                             # add components here instead, e.g.
                             # (google-cloud-sdk.withExtraComponents
                             #   [ google-cloud-sdk.components.gke-gcloud-auth-plugin ])
+    awscli2                 # `aws` (v2); `aws configure` or `aws configure sso` once
 
     # ── data / json ───────────────────────────────────────────────
     jq yq

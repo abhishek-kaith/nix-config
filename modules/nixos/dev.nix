@@ -101,6 +101,7 @@ in
     agents.codex        # `codex`  — OpenAI, Rust binary, sandboxes via landlock/seccomp
     agents.pi           # `pi`     — model-agnostic, MIT
     agents.opencode     #
+    agents.antigravity-cli  # `agy` — Google Antigravity
 
     # T3 Code — a GUI over the agents above. Same input, same cache, same
     # `nix flake update llm-agents` to bump it.
