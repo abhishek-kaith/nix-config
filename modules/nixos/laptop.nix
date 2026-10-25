@@ -46,7 +46,7 @@ in
   # no longer drains the battery flat.
   #
   # This works only because the swap LV lives *inside* LUKS and initrd unlocks it
-  # before resume (boot.initrd.systemd.enable in base.nix). A random-key swap
+  # before resume (systemd stage 1, see base.nix). A random-key swap
   # would suspend fine and then lose the image on resume.
   services.logind.settings.Login.HandleLidSwitch = "suspend-then-hibernate";
   # HandleLidSwitchExternalPower is left unset: systemd defaults it to the value

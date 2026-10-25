@@ -45,13 +45,10 @@
   # to roll back. Per-host bootloader enable lives in hosts/*/default.nix.
   boot.loader.timeout = 0;
 
-  # systemd in stage 1. Starts units in parallel instead of running one shell
-  # script top-to-bottom, and unlocks LUKS via systemd-cryptsetup — which is the
-  # slowest part of this boot. disko already emits boot.initrd.luks.devices, and
-  # it turns this on itself when FIDO2 unlock is used, so the pairing is supported.
-  # If a boot ever fails here: hold Space at power-on for the systemd-boot menu and
-  # pick the previous generation.
-  boot.initrd.systemd.enable = true;
+  # Stage 1 is always systemd: nixpkgs removed the scripted initrd, so there is no
+  # boot.initrd.systemd.enable to set any more (defining it is now an assertion
+  # failure). LUKS is unlocked by systemd-cryptsetup from the
+  # boot.initrd.luks.devices that disko emits.
 
   # Empty /tmp on every boot. It is a real directory on the btrfs root here, NOT a
   # tmpfs — deliberately, because that is what lets a large `nix build` spill to
