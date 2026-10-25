@@ -70,6 +70,20 @@
       "audio/opus"       = "mpv.desktop";
       "audio/mp4"        = "mpv.desktop";     # .m4a
       "audio/aac"        = "mpv.desktop";
+
+      # Deep links for the agent apps (modules/nixos/dev.nix). Each writes its
+      # own .desktop to ~/.local/share/applications on first run and registers
+      # it with `xdg-mime default`; declared here so the force below keeps them.
+      "x-scheme-handler/claude-cli" = "claude-code-url-handler.desktop";
+      "x-scheme-handler/t3code"     = "com.t3tools.T3Code.desktop";
     };
   };
+
+  # `xdg-mime default` writes mimeapps.list in place, replacing the link to
+  # this one with a plain file (T3 Code does it on every start). Activation
+  # then moves that file aside to .hm-bak, and once an .hm-bak is already
+  # there it refuses, and all of home-manager fails to activate, at every
+  # boot and every rebuild. The defaults are all declared above, so whatever
+  # an app wrote last is simply replaced.
+  xdg.configFile."mimeapps.list".force = true;
 }
