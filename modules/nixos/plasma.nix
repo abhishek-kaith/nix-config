@@ -30,7 +30,6 @@ in
     khelpcenter  # offline handbook browser
     krdp         # an RDP *server*. Nothing here should accept inbound remote
                  # desktop on foreign wifi — same reasoning as no sshd (hosts/t14)
-    kwin-x11     # the X11 session; this machine is Wayland-only
   ];
 
   # No KDE PIM (KMail, Kontact, Merkuro), which the plasma6 module installs by
@@ -39,6 +38,15 @@ in
   # and ~2 s of startup) to serve accounts that were never set up. Its old
   # data, ~/.local/share/akonadi and ~/.config/akonadi*, can be deleted.
   programs.kde-pim.enable = false;
+
+  # DrKonqi still catches a crash the moment it happens. What goes is its
+  # login-time pickup, meant for crashes no session was there to see: it
+  # walks the whole journal and re-launches DrKonqi for every crash it finds,
+  # long-gone ones included, each login. Here it read the 2.1 GB journal (a
+  # 620 MB peak) and started DrKonqi 13 to 27 times a minute into the
+  # session, for cosmic-applets crashes from September whose core files had
+  # aged out weeks ago.
+  systemd.user.services.drkonqi-coredump-pickup.enable = false;
 
   # Konveyor builds against this nixpkgs' KWin and needs >= 6.7. Without this,
   # importing the module on a stable 26.05 host (Plasma 6.6) fails deep inside

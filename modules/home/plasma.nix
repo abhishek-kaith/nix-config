@@ -144,7 +144,46 @@
   # Declaring panels makes plasma-manager own ALL of them: when this list
   # changes, the next login deletes every panel and rebuilds these, so a panel
   # edited in the GUI only lasts until then.
-  programs.plasma.panels = [
+  programs.plasma.panels = let
+    # The tray's widgets. Every one it enables is loaded as plasmashell
+    # starts, shown or not, so this is part of how long the bar takes to come
+    # up at login; left alone it enables all 16 that Plasma offers.
+    #
+    # Always in the bar (Plasma sorts them itself).
+    trayShown = [
+      "org.kde.plasma.notifications"
+      "org.kde.plasma.clipboard"
+      "org.kde.plasma.volume"
+      "org.kde.plasma.networkmanagement"
+      "org.kde.plasma.battery"
+    ];
+    # Always behind the arrow.
+    trayHidden = [
+      "org.kde.plasma.bluetooth"
+      "org.kde.plasma.mediacontroller"
+      "org.kde.plasma.brightness"
+      "org.kde.kdeconnect"
+    ];
+    # Shown only while active.
+    trayOnDemand = [
+      "org.kde.plasma.devicenotifier"   # a USB drive is plugged in
+      "org.kde.plasma.cameraindicator"  # an app is using the camera
+    ];
+    # Not loaded at all: weather (fetched over the network at every login),
+    # the keyboard layout switcher and Caps Lock light (one layout here), the
+    # input-method menu, and display setup (Meta+P still switches displays;
+    # that is KScreen's daemon, not this widget). They are written into
+    # knownItems as well, because the tray switches on any enabled-by-default
+    # widget missing from that list, and plasma-manager rebuilds the tray from
+    # nothing whenever the panel changes.
+    trayDeclined = [
+      "org.kde.plasma.weather"
+      "org.kde.plasma.keyboardlayout"
+      "org.kde.plasma.keyboardindicator"
+      "org.kde.plasma.manage-inputmethod"
+      "org.kde.kscreen"
+    ];
+  in [
     {
       location = "top";
       # 24 rather than 28: in a bar this slim Plasma draws tray icons at
@@ -177,28 +216,18 @@
         }
         { panelSpacer.expanding = true; }
         {
-          systemTray = {
+          # The raw widget rather than plasma-manager's `systemTray`, which
+          # has no way to write knownItems (see trayDeclined above).
+          name = "org.kde.plasma.systemtray";
+          config.General = {
+            shownItems  = trayShown;
+            hiddenItems = trayHidden;
+            extraItems  = trayShown ++ trayHidden ++ trayOnDemand;
+            knownItems  = trayShown ++ trayHidden ++ trayOnDemand ++ trayDeclined;
             # Small icons (16px in the 24px bar, Plasma's smallest standard
-            # size) with room between them.
-            icons = { scaleToFit = true; spacing = "medium"; };
-            items = {
-              # Always in the bar (Plasma sorts them itself).
-              shown = [
-                "org.kde.plasma.notifications"
-                "org.kde.plasma.clipboard"
-                "org.kde.plasma.volume"
-                "org.kde.plasma.networkmanagement"
-                "org.kde.plasma.battery"
-              ];
-              # Always behind the arrow. Anything not named in either list
-              # (USB drives, the camera-in-use light) shows only while active.
-              hidden = [
-                "org.kde.plasma.bluetooth"
-                "org.kde.plasma.mediacontroller"
-                "org.kde.plasma.brightness"
-                "org.kde.kdeconnect"
-              ];
-            };
+            # size) with room between them (2 units, the GUI's "medium").
+            scaleIconsToFit = true;
+            iconSpacing     = 2;
           };
         }
       ];
