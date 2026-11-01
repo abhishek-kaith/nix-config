@@ -34,6 +34,12 @@
   # /nix is deliberately not snapshotted. It is the one subvolume that is already
   # reproducible from this repo, and it is by far the largest — snapshotting it
   # would pin every garbage-collected store path and defeat `nix.gc`.
+  #
+  # Cleanup runs hourly to keep pace with the hourly timeline. At the module
+  # default of once a day, up to ~24 hourlies beyond TIMELINE_LIMIT_HOURLY pile up
+  # between runs, each pinning whatever churned that hour; on 2026-10-30 they were
+  # holding 59G on a disk at 95%. Cleanup is only a few btrfs subvolume deletes.
+  services.snapper.cleanupInterval = "1h";
   services.snapper.configs = {
     root = {
       SUBVOLUME        = "/";
